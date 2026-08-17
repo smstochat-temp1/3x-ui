@@ -32,7 +32,7 @@ import { OutboundsTab } from './outbounds';
 import { BalancersTab } from './balancers';
 import { cleanupOrphanedBalancerLoopbacks, ensureMissingBalancerLoopbacks, detectBalancerCycles } from './balancers/balancer-loopback';
 import { DnsTab } from './dns';
-import { WarpModal, NordModal } from './overrides';
+import { WarpModal, NordModal, PiaManager } from './overrides';
 import './XrayPage.css';
 
 const SECTION_SLUGS = ['basic', 'routing', 'outbound', 'balancer', 'dns', 'advanced'];
@@ -61,6 +61,8 @@ export default function XrayPage() {
     clientReverseTags,
     subscriptionOutbounds,
     subscriptionOutboundTags,
+    piaOutbounds,
+    piaOutboundTags,
     outboundsTraffic,
     outboundTestStates,
     subscriptionTestStates,
@@ -76,6 +78,7 @@ export default function XrayPage() {
 
   const [warpOpen, setWarpOpen] = useState(false);
   const [nordOpen, setNordOpen] = useState(false);
+  const [piaOpen, setPiaOpen] = useState(false);
   const [advSettings, setAdvSettings] = useState<AdvKey>('xraySetting');
   const location = useLocation();
   const navigate = useNavigate();
@@ -222,6 +225,7 @@ export default function XrayPage() {
             inboundTags={inboundTags}
             clientReverseTags={clientReverseTags}
             subscriptionOutboundTags={subscriptionOutboundTags}
+            piaOutboundTags={piaOutboundTags}
             isMobile={isMobile}
           />
         );
@@ -237,6 +241,8 @@ export default function XrayPage() {
             inboundTags={inboundTags}
             subscriptionOutbounds={subscriptionOutbounds}
             subscriptionOutboundTags={subscriptionOutboundTags}
+            piaOutbounds={piaOutbounds}
+            piaOutboundTags={piaOutboundTags}
             isMobile={isMobile}
             onResetTraffic={resetOutboundsTraffic}
             onTest={onTestOutbound}
@@ -244,6 +250,7 @@ export default function XrayPage() {
             onTestAll={testAllOutbounds}
             onShowWarp={() => setWarpOpen(true)}
             onShowNord={() => setNordOpen(true)}
+            onShowPia={() => setPiaOpen(true)}
             onRefreshXrayData={fetchAll}
           />
         );
@@ -254,6 +261,7 @@ export default function XrayPage() {
             setTemplateSettings={setTemplateSettings}
             clientReverseTags={clientReverseTags}
             subscriptionOutboundTags={subscriptionOutboundTags}
+            piaOutboundTags={piaOutboundTags}
             isMobile={isMobile}
           />
         );
@@ -370,6 +378,7 @@ export default function XrayPage() {
           onRemoveOutbound={onRemoveOutboundByIndex}
           onRemoveRoutingRules={onRemoveRoutingRules}
         />
+        <PiaManager open={piaOpen} onClose={() => setPiaOpen(false)} onChanged={fetchAll} />
       </Layout>
     </ConfigProvider>
   );

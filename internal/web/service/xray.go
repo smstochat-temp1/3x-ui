@@ -14,6 +14,8 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/logger"
 	"github.com/mhsanaei/3x-ui/v3/internal/util/json_util"
+	"github.com/mhsanaei/3x-ui/v3/internal/web/service/managedoutbound"
+	"github.com/mhsanaei/3x-ui/v3/internal/web/service/pia"
 	"github.com/mhsanaei/3x-ui/v3/internal/xray"
 
 	"go.uber.org/atomic"
@@ -356,6 +358,11 @@ func (s *XrayService) GetXrayConfig() (*xray.Config, error) {
 		mergeSubscriptionOutbounds(xrayConfig, prepend, appendList)
 	}
 
+	ensureManagedOutboundSources()
+	if err := mergeManagedOutboundSources(s, xrayConfig); err != nil {
+		return nil, err
+	}
+
 	// Route opted-in local mtproto inbounds through the core's router. Each one
 	// gets a loopback SOCKS bridge — tagged with the inbound's own tag so it is
 	// matchable in routing rules — that its mtg sidecar dials Telegram through.
@@ -692,6 +699,78 @@ func mergeSubscriptionOutbounds(cfg *xray.Config, prepend, appendList []any) {
 		return
 	}
 	cfg.OutboundConfigs = json_util.RawMessage(combined)
+}
+
+var managedOutboundOnce sync.Once
+
+func ensureManagedOutboundSources() {
+	managedOutboundOnce.Do(pia.RegisterSource)
+}
+
+func mergeManagedOutboundSources(s *XrayService, cfg *xray.Config) error {
+	extra := s.piaReferenceTags()
+	for _, src := range managedoutbound.All() {
+		ready, skipped, err := src.Outbounds()
+		if err != nil {
+			return err
+		}
+		if err := appendGeneratedOutbounds(cfg, ready); err != nil {
+			return err
+		}
+		for _, tag := range skipped {
+			if pia.ConfigReferencesTag(cfg.RouterConfig, extra, tag) {
+				return fmt.Errorf("pia outbound %s is not ready but is still referenced", tag)
+			}
+		}
+	}
+	return nil
+}
+
+func appendGeneratedOutbounds(cfg *xray.Config, extras []any) error {
+	if len(extras) == 0 {
+		return nil
+	}
+	var current []any
+	if len(cfg.OutboundConfigs) > 0 {
+		if err := json.Unmarshal(cfg.OutboundConfigs, &current); err != nil {
+			return err
+		}
+	}
+	current = append(current, extras...)
+	combined, err := json.MarshalIndent(current, "", "  ")
+	if err != nil {
+		return err
+	}
+	cfg.OutboundConfigs = json_util.RawMessage(combined)
+	return nil
+}
+
+func (s *XrayService) piaReferenceTags() []string {
+	var extra []string
+	if tag, err := s.settingService.GetPanelOutbound(); err == nil && tag != "" {
+		extra = append(extra, tag)
+	}
+	if nodes, err := s.nodeService.GetAll(); err == nil {
+		for _, n := range nodes {
+			if n.OutboundTag != "" {
+				extra = append(extra, n.OutboundTag)
+			}
+		}
+	}
+	if inbounds, err := s.inboundService.GetAllInbounds(); err == nil {
+		for _, ib := range inbounds {
+			if ib.Protocol != model.MTProto {
+				continue
+			}
+			var parsed struct {
+				OutboundTag string `json:"outboundTag"`
+			}
+			if json.Unmarshal([]byte(ib.Settings), &parsed) == nil && parsed.OutboundTag != "" {
+				extra = append(extra, parsed.OutboundTag)
+			}
+		}
+	}
+	return extra
 }
 
 // ensureAPIServices guarantees the gRPC services the panel depends on are

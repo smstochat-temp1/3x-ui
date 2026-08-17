@@ -61,6 +61,14 @@ knobs — leave them unset unless you're tuning a constrained host.
 | ------------------------ | ------- | --------------------- |
 | `XRAY_VMESS_AEAD_FORCED` | `false` | Force VMess AEAD.     |
 
+## PIA managed egress
+
+Off by default. Requires node-token encryption (`NODE_TOKEN_ENCRYPTION=migration|required` and a keyring file mode `0600`, or `XUI_NODE_TOKEN_KEY`) before a PIA token or WireGuard private key can be stored. A backup without that keyring cannot be decrypted. See [Outbounds & Routing](/docs/operations/outbounds-routing).
+
+| Variable           | Default | Description                                                                 |
+| ------------------ | ------- | --------------------------------------------------------------------------- |
+| `XUI_PIA_ENABLED`  | `false` | Enable the PIA manager API/UI and inject ready PIA WireGuard outbounds.     |
+
 ## Tunnel health monitor
 
 Optional watchdog: it probes a URL (optionally **through** a local Xray inbound)

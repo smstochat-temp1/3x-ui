@@ -2837,6 +2837,385 @@
         ],
         "type": "object"
       },
+      "PiaBindingView": {
+        "properties": {
+          "active": {
+            "example": true,
+            "type": "boolean"
+          },
+          "generation": {
+            "example": 1,
+            "type": "integer"
+          },
+          "peerIp": {
+            "example": "10.0.0.2/32",
+            "type": "string"
+          },
+          "publicKey": {
+            "example": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+            "type": "string"
+          },
+          "serverHostname": {
+            "example": "useast401",
+            "type": "string"
+          },
+          "serverIp": {
+            "example": "198.51.100.10",
+            "type": "string"
+          },
+          "serverPort": {
+            "example": 1337,
+            "type": "integer"
+          },
+          "uid": {
+            "example": "b1c2d3e4",
+            "type": "string"
+          }
+        },
+        "required": [
+          "active",
+          "generation",
+          "peerIp",
+          "publicKey",
+          "serverHostname",
+          "serverIp",
+          "serverPort",
+          "uid"
+        ],
+        "type": "object"
+      },
+      "PiaCatalogStatusView": {
+        "properties": {
+          "fetchedAt": {
+            "example": 1760000000,
+            "format": "int64",
+            "type": "integer"
+          },
+          "fresh": {
+            "example": true,
+            "type": "boolean"
+          },
+          "lastErrorCode": {
+            "type": "string"
+          },
+          "lastErrorMessage": {
+            "type": "string"
+          },
+          "payloadSha256": {
+            "example": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "type": "string"
+          },
+          "regionCount": {
+            "example": 12,
+            "type": "integer"
+          },
+          "serverCount": {
+            "example": 40,
+            "type": "integer"
+          },
+          "signatureVerified": {
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "fetchedAt",
+          "fresh",
+          "lastErrorCode",
+          "lastErrorMessage",
+          "payloadSha256",
+          "regionCount",
+          "serverCount",
+          "signatureVerified"
+        ],
+        "type": "object"
+      },
+      "PiaDependencyView": {
+        "properties": {
+          "field": {
+            "example": "outboundTag",
+            "type": "string"
+          },
+          "kind": {
+            "example": "routing_rule",
+            "type": "string"
+          },
+          "label": {
+            "example": "rule 3",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "kind",
+          "label"
+        ],
+        "type": "object"
+      },
+      "PiaEgressView": {
+        "properties": {
+          "binding": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PiaBindingView"
+              }
+            ],
+            "nullable": true
+          },
+          "enabled": {
+            "example": true,
+            "type": "boolean"
+          },
+          "generation": {
+            "example": 1,
+            "type": "integer"
+          },
+          "hasActiveBinding": {
+            "example": true,
+            "type": "boolean"
+          },
+          "ipv6Policy": {
+            "example": "block",
+            "type": "string"
+          },
+          "keepaliveSeconds": {
+            "example": 25,
+            "type": "integer"
+          },
+          "lastErrorCode": {
+            "type": "string"
+          },
+          "lastErrorMessage": {
+            "type": "string"
+          },
+          "lastExternalIp": {
+            "type": "string"
+          },
+          "lastLatencyMs": {
+            "type": "integer"
+          },
+          "mtu": {
+            "example": 1420,
+            "type": "integer"
+          },
+          "name": {
+            "example": "US East",
+            "type": "string"
+          },
+          "outboundTag": {
+            "example": "pia-a1b2c3d4",
+            "type": "string"
+          },
+          "peerIp": {
+            "type": "string"
+          },
+          "profileUid": {
+            "example": "a1b2c3d4e5f6",
+            "type": "string"
+          },
+          "publicKey": {
+            "type": "string"
+          },
+          "regionId": {
+            "example": "us-east",
+            "type": "string"
+          },
+          "regionName": {
+            "example": "US East",
+            "type": "string"
+          },
+          "serverHostname": {
+            "example": "useast401",
+            "type": "string"
+          },
+          "serverIp": {
+            "example": "198.51.100.10",
+            "type": "string"
+          },
+          "status": {
+            "example": "ready",
+            "type": "string"
+          },
+          "uid": {
+            "example": "e1f2a3b4",
+            "type": "string"
+          }
+        },
+        "required": [
+          "enabled",
+          "generation",
+          "hasActiveBinding",
+          "ipv6Policy",
+          "keepaliveSeconds",
+          "lastErrorCode",
+          "lastErrorMessage",
+          "lastExternalIp",
+          "lastLatencyMs",
+          "mtu",
+          "name",
+          "outboundTag",
+          "peerIp",
+          "profileUid",
+          "publicKey",
+          "regionId",
+          "regionName",
+          "serverHostname",
+          "serverIp",
+          "status",
+          "uid"
+        ],
+        "type": "object"
+      },
+      "PiaErrorInfo": {
+        "properties": {
+          "code": {
+            "example": "pia_invalid_credentials",
+            "type": "string"
+          },
+          "details": {},
+          "operationId": {
+            "example": "provision",
+            "type": "string"
+          },
+          "retryable": {
+            "example": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "retryable"
+        ],
+        "type": "object"
+      },
+      "PiaProfileView": {
+        "properties": {
+          "accountHint": {
+            "example": "p***34",
+            "type": "string"
+          },
+          "authStatus": {
+            "example": "valid",
+            "type": "string"
+          },
+          "enabled": {
+            "example": true,
+            "type": "boolean"
+          },
+          "hasToken": {
+            "example": true,
+            "type": "boolean"
+          },
+          "lastAuthErrorCode": {
+            "type": "string"
+          },
+          "lastAuthErrorMessage": {
+            "type": "string"
+          },
+          "lastAuthenticatedAt": {
+            "example": 1760000000,
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "example": "home",
+            "type": "string"
+          },
+          "revision": {
+            "example": 1,
+            "type": "integer"
+          },
+          "tokenExpiresAt": {
+            "example": 1760000000,
+            "format": "int64",
+            "type": "integer"
+          },
+          "uid": {
+            "example": "a1b2c3d4e5f6",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountHint",
+          "authStatus",
+          "enabled",
+          "hasToken",
+          "lastAuthErrorCode",
+          "lastAuthErrorMessage",
+          "lastAuthenticatedAt",
+          "name",
+          "revision",
+          "tokenExpiresAt",
+          "uid"
+        ],
+        "type": "object"
+      },
+      "PiaRegionView": {
+        "properties": {
+          "countryCode": {
+            "example": "US",
+            "type": "string"
+          },
+          "id": {
+            "example": "us-east",
+            "type": "string"
+          },
+          "name": {
+            "example": "US East",
+            "type": "string"
+          },
+          "serverCount": {
+            "example": 3,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "countryCode",
+          "id",
+          "name",
+          "serverCount"
+        ],
+        "type": "object"
+      },
+      "PiaServerView": {
+        "properties": {
+          "hostname": {
+            "example": "useast401",
+            "type": "string"
+          },
+          "ip": {
+            "example": "198.51.100.10",
+            "type": "string"
+          }
+        },
+        "required": [
+          "hostname",
+          "ip"
+        ],
+        "type": "object"
+      },
+      "PiaStatusView": {
+        "properties": {
+          "enabled": {
+            "example": false,
+            "type": "boolean"
+          },
+          "encryptionMode": {
+            "example": "required",
+            "type": "string"
+          },
+          "secretboxReady": {
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "enabled",
+          "encryptionMode",
+          "secretboxReady"
+        ],
+        "type": "object"
+      },
       "ProbeResultUI": {
         "properties": {
           "cpuPct": {
@@ -3081,6 +3460,10 @@
     {
       "name": "Xray Settings",
       "description": "Xray configuration template, outbound management, Warp/Nord integration, and config testing. All endpoints under /panel/api/xray."
+    },
+    {
+      "name": "PIA managed egress",
+      "description": "Database-managed Private Internet Access WireGuard outbounds. Disabled until XUI_PIA_ENABLED=true and node-token encryption is on. Secrets (password, token, private key) never appear in responses. Admin session or admin API token only."
     },
     {
       "name": "Subscription Server",
@@ -11723,6 +12106,1238 @@
                     },
                     "obj": {}
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/pia/status": {
+      "get": {
+        "tags": [
+          "PIA managed egress"
+        ],
+        "summary": "Report whether PIA is enabled and whether the secretbox keyring is ready.",
+        "operationId": "get_panel_api_pia_status",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/PiaStatusView"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "enabled": false,
+                    "encryptionMode": "required",
+                    "secretboxReady": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/pia/profiles": {
+      "get": {
+        "tags": [
+          "PIA managed egress"
+        ],
+        "summary": "List PIA account profiles (no token material).",
+        "operationId": "get_panel_api_pia_profiles",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PiaProfileView"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": [
+                    {
+                      "accountHint": "p***34",
+                      "authStatus": "valid",
+                      "enabled": true,
+                      "hasToken": true,
+                      "lastAuthErrorCode": "",
+                      "lastAuthErrorMessage": "",
+                      "lastAuthenticatedAt": 1760000000,
+                      "name": "home",
+                      "revision": 1,
+                      "tokenExpiresAt": 1760000000,
+                      "uid": "a1b2c3d4e5f6"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "PIA managed egress"
+        ],
+        "summary": "Create a PIA account profile.",
+        "operationId": "post_panel_api_pia_profiles",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/PiaProfileView"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "accountHint": "p***34",
+                    "authStatus": "valid",
+                    "enabled": true,
+                    "hasToken": true,
+                    "lastAuthErrorCode": "",
+                    "lastAuthErrorMessage": "",
+                    "lastAuthenticatedAt": 1760000000,
+                    "name": "home",
+                    "revision": 1,
+                    "tokenExpiresAt": 1760000000,
+                    "uid": "a1b2c3d4e5f6"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/pia/profiles/{uid}/authenticate": {
+      "post": {
+        "tags": [
+          "PIA managed egress"
+        ],
+        "summary": "Exchange a PIA username and password for a token. The password is not stored.",
+        "operationId": "post_panel_api_pia_profiles_uid_authenticate",
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Profile uid.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/PiaProfileView"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "accountHint": "p***34",
+                    "authStatus": "valid",
+                    "enabled": true,
+                    "hasToken": true,
+                    "lastAuthErrorCode": "",
+                    "lastAuthErrorMessage": "",
+                    "lastAuthenticatedAt": 1760000000,
+                    "name": "home",
+                    "revision": 1,
+                    "tokenExpiresAt": 1760000000,
+                    "uid": "a1b2c3d4e5f6"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/pia/profiles/{uid}": {
+      "patch": {
+        "tags": [
+          "PIA managed egress"
+        ],
+        "summary": "Rename or enable/disable a PIA profile.",
+        "operationId": "patch_panel_api_pia_profiles_uid",
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Profile uid.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/PiaProfileView"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "accountHint": "p***34",
+                    "authStatus": "valid",
+                    "enabled": true,
+                    "hasToken": true,
+                    "lastAuthErrorCode": "",
+                    "lastAuthErrorMessage": "",
+                    "lastAuthenticatedAt": 1760000000,
+                    "name": "home",
+                    "revision": 1,
+                    "tokenExpiresAt": 1760000000,
+                    "uid": "a1b2c3d4e5f6"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "PIA managed egress"
+        ],
+        "summary": "Delete a PIA profile and its egresses. Fails with pia_dependency_conflict when outbound tags are still referenced.",
+        "operationId": "delete_panel_api_pia_profiles_uid",
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Profile uid.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/pia/catalog/status": {
+      "get": {
+        "tags": [
+          "PIA managed egress"
+        ],
+        "summary": "Show freshness of the last signature-verified PIA server list.",
+        "operationId": "get_panel_api_pia_catalog_status",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/PiaCatalogStatusView"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "fetchedAt": 1760000000,
+                    "fresh": true,
+                    "lastErrorCode": "",
+                    "lastErrorMessage": "",
+                    "payloadSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "regionCount": 12,
+                    "serverCount": 40,
+                    "signatureVerified": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/pia/catalog/refresh": {
+      "post": {
+        "tags": [
+          "PIA managed egress"
+        ],
+        "summary": "Fetch and signature-verify the PIA server list.",
+        "operationId": "post_panel_api_pia_catalog_refresh",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/PiaCatalogStatusView"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "fetchedAt": 1760000000,
+                    "fresh": true,
+                    "lastErrorCode": "",
+                    "lastErrorMessage": "",
+                    "payloadSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "regionCount": 12,
+                    "serverCount": 40,
+                    "signatureVerified": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/pia/catalog/regions": {
+      "get": {
+        "tags": [
+          "PIA managed egress"
+        ],
+        "summary": "List PIA regions from the verified catalog.",
+        "operationId": "get_panel_api_pia_catalog_regions",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PiaRegionView"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": [
+                    {
+                      "countryCode": "US",
+                      "id": "us-east",
+                      "name": "US East",
+                      "serverCount": 3
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/pia/catalog/regions/{id}/servers": {
+      "get": {
+        "tags": [
+          "PIA managed egress"
+        ],
+        "summary": "List WireGuard servers in a PIA region.",
+        "operationId": "get_panel_api_pia_catalog_regions_id_servers",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Region id.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PiaServerView"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": [
+                    {
+                      "hostname": "useast401",
+                      "ip": "198.51.100.10"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/pia/egresses": {
+      "get": {
+        "tags": [
+          "PIA managed egress"
+        ],
+        "summary": "List managed PIA outbounds (no private keys).",
+        "operationId": "get_panel_api_pia_egresses",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PiaEgressView"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": [
+                    {
+                      "binding": null,
+                      "enabled": true,
+                      "generation": 1,
+                      "hasActiveBinding": true,
+                      "ipv6Policy": "block",
+                      "keepaliveSeconds": 25,
+                      "lastErrorCode": "",
+                      "lastErrorMessage": "",
+                      "lastExternalIp": "",
+                      "lastLatencyMs": 0,
+                      "mtu": 1420,
+                      "name": "US East",
+                      "outboundTag": "pia-a1b2c3d4",
+                      "peerIp": "",
+                      "profileUid": "a1b2c3d4e5f6",
+                      "publicKey": "",
+                      "regionId": "us-east",
+                      "regionName": "US East",
+                      "serverHostname": "useast401",
+                      "serverIp": "198.51.100.10",
+                      "status": "ready",
+                      "uid": "e1f2a3b4"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "PIA managed egress"
+        ],
+        "summary": "Create a PIA outbound with an immutable tag.",
+        "operationId": "post_panel_api_pia_egresses",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/PiaEgressView"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "binding": null,
+                    "enabled": true,
+                    "generation": 1,
+                    "hasActiveBinding": true,
+                    "ipv6Policy": "block",
+                    "keepaliveSeconds": 25,
+                    "lastErrorCode": "",
+                    "lastErrorMessage": "",
+                    "lastExternalIp": "",
+                    "lastLatencyMs": 0,
+                    "mtu": 1420,
+                    "name": "US East",
+                    "outboundTag": "pia-a1b2c3d4",
+                    "peerIp": "",
+                    "profileUid": "a1b2c3d4e5f6",
+                    "publicKey": "",
+                    "regionId": "us-east",
+                    "regionName": "US East",
+                    "serverHostname": "useast401",
+                    "serverIp": "198.51.100.10",
+                    "status": "ready",
+                    "uid": "e1f2a3b4"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/pia/egresses/{uid}": {
+      "get": {
+        "tags": [
+          "PIA managed egress"
+        ],
+        "summary": "Get one managed PIA outbound.",
+        "operationId": "get_panel_api_pia_egresses_uid",
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Egress uid.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/PiaEgressView"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "binding": null,
+                    "enabled": true,
+                    "generation": 1,
+                    "hasActiveBinding": true,
+                    "ipv6Policy": "block",
+                    "keepaliveSeconds": 25,
+                    "lastErrorCode": "",
+                    "lastErrorMessage": "",
+                    "lastExternalIp": "",
+                    "lastLatencyMs": 0,
+                    "mtu": 1420,
+                    "name": "US East",
+                    "outboundTag": "pia-a1b2c3d4",
+                    "peerIp": "",
+                    "profileUid": "a1b2c3d4e5f6",
+                    "publicKey": "",
+                    "regionId": "us-east",
+                    "regionName": "US East",
+                    "serverHostname": "useast401",
+                    "serverIp": "198.51.100.10",
+                    "status": "ready",
+                    "uid": "e1f2a3b4"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "PIA managed egress"
+        ],
+        "summary": "Update display name or tunnel options. The outbound tag is immutable.",
+        "operationId": "patch_panel_api_pia_egresses_uid",
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Egress uid.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/PiaEgressView"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "binding": null,
+                    "enabled": true,
+                    "generation": 1,
+                    "hasActiveBinding": true,
+                    "ipv6Policy": "block",
+                    "keepaliveSeconds": 25,
+                    "lastErrorCode": "",
+                    "lastErrorMessage": "",
+                    "lastExternalIp": "",
+                    "lastLatencyMs": 0,
+                    "mtu": 1420,
+                    "name": "US East",
+                    "outboundTag": "pia-a1b2c3d4",
+                    "peerIp": "",
+                    "profileUid": "a1b2c3d4e5f6",
+                    "publicKey": "",
+                    "regionId": "us-east",
+                    "regionName": "US East",
+                    "serverHostname": "useast401",
+                    "serverIp": "198.51.100.10",
+                    "status": "ready",
+                    "uid": "e1f2a3b4"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "PIA managed egress"
+        ],
+        "summary": "Delete a PIA outbound. Requires replacementTag or deleteRules when routing still references the tag.",
+        "operationId": "delete_panel_api_pia_egresses_uid",
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Egress uid.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/pia/egresses/{uid}/provision": {
+      "post": {
+        "tags": [
+          "PIA managed egress"
+        ],
+        "summary": "Generate a WireGuard key, register it with PIA /addKey, and store the encrypted binding.",
+        "operationId": "post_panel_api_pia_egresses_uid_provision",
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Egress uid.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/PiaEgressView"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "binding": null,
+                    "enabled": true,
+                    "generation": 1,
+                    "hasActiveBinding": true,
+                    "ipv6Policy": "block",
+                    "keepaliveSeconds": 25,
+                    "lastErrorCode": "",
+                    "lastErrorMessage": "",
+                    "lastExternalIp": "",
+                    "lastLatencyMs": 0,
+                    "mtu": 1420,
+                    "name": "US East",
+                    "outboundTag": "pia-a1b2c3d4",
+                    "peerIp": "",
+                    "profileUid": "a1b2c3d4e5f6",
+                    "publicKey": "",
+                    "regionId": "us-east",
+                    "regionName": "US East",
+                    "serverHostname": "useast401",
+                    "serverIp": "198.51.100.10",
+                    "status": "ready",
+                    "uid": "e1f2a3b4"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/pia/egresses/{uid}/rotate-key": {
+      "post": {
+        "tags": [
+          "PIA managed egress"
+        ],
+        "summary": "Register a new key first, then switch the active binding.",
+        "operationId": "post_panel_api_pia_egresses_uid_rotate_key",
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Egress uid.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/PiaEgressView"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "binding": null,
+                    "enabled": true,
+                    "generation": 1,
+                    "hasActiveBinding": true,
+                    "ipv6Policy": "block",
+                    "keepaliveSeconds": 25,
+                    "lastErrorCode": "",
+                    "lastErrorMessage": "",
+                    "lastExternalIp": "",
+                    "lastLatencyMs": 0,
+                    "mtu": 1420,
+                    "name": "US East",
+                    "outboundTag": "pia-a1b2c3d4",
+                    "peerIp": "",
+                    "profileUid": "a1b2c3d4e5f6",
+                    "publicKey": "",
+                    "regionId": "us-east",
+                    "regionName": "US East",
+                    "serverHostname": "useast401",
+                    "serverIp": "198.51.100.10",
+                    "status": "ready",
+                    "uid": "e1f2a3b4"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/pia/egresses/{uid}/reprovision": {
+      "post": {
+        "tags": [
+          "PIA managed egress"
+        ],
+        "summary": "Re-register a WireGuard key for the same pinned server.",
+        "operationId": "post_panel_api_pia_egresses_uid_reprovision",
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Egress uid.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/PiaEgressView"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "binding": null,
+                    "enabled": true,
+                    "generation": 1,
+                    "hasActiveBinding": true,
+                    "ipv6Policy": "block",
+                    "keepaliveSeconds": 25,
+                    "lastErrorCode": "",
+                    "lastErrorMessage": "",
+                    "lastExternalIp": "",
+                    "lastLatencyMs": 0,
+                    "mtu": 1420,
+                    "name": "US East",
+                    "outboundTag": "pia-a1b2c3d4",
+                    "peerIp": "",
+                    "profileUid": "a1b2c3d4e5f6",
+                    "publicKey": "",
+                    "regionId": "us-east",
+                    "regionName": "US East",
+                    "serverHostname": "useast401",
+                    "serverIp": "198.51.100.10",
+                    "status": "ready",
+                    "uid": "e1f2a3b4"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/pia/egresses/{uid}/test": {
+      "post": {
+        "tags": [
+          "PIA managed egress"
+        ],
+        "summary": "Probe the PIA outbound on the server. The private key never leaves the panel.",
+        "operationId": "post_panel_api_pia_egresses_uid_test",
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Egress uid.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/pia/egresses/{uid}/enable": {
+      "post": {
+        "tags": [
+          "PIA managed egress"
+        ],
+        "summary": "Enable a ready PIA outbound so it is injected into Xray.",
+        "operationId": "post_panel_api_pia_egresses_uid_enable",
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Egress uid.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/PiaEgressView"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "binding": null,
+                    "enabled": true,
+                    "generation": 1,
+                    "hasActiveBinding": true,
+                    "ipv6Policy": "block",
+                    "keepaliveSeconds": 25,
+                    "lastErrorCode": "",
+                    "lastErrorMessage": "",
+                    "lastExternalIp": "",
+                    "lastLatencyMs": 0,
+                    "mtu": 1420,
+                    "name": "US East",
+                    "outboundTag": "pia-a1b2c3d4",
+                    "peerIp": "",
+                    "profileUid": "a1b2c3d4e5f6",
+                    "publicKey": "",
+                    "regionId": "us-east",
+                    "regionName": "US East",
+                    "serverHostname": "useast401",
+                    "serverIp": "198.51.100.10",
+                    "status": "ready",
+                    "uid": "e1f2a3b4"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/pia/egresses/{uid}/disable": {
+      "post": {
+        "tags": [
+          "PIA managed egress"
+        ],
+        "summary": "Disable a PIA outbound. Requires replacementTag or deleteRules when still referenced.",
+        "operationId": "post_panel_api_pia_egresses_uid_disable",
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Egress uid.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/PiaEgressView"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "binding": null,
+                    "enabled": true,
+                    "generation": 1,
+                    "hasActiveBinding": true,
+                    "ipv6Policy": "block",
+                    "keepaliveSeconds": 25,
+                    "lastErrorCode": "",
+                    "lastErrorMessage": "",
+                    "lastExternalIp": "",
+                    "lastLatencyMs": 0,
+                    "mtu": 1420,
+                    "name": "US East",
+                    "outboundTag": "pia-a1b2c3d4",
+                    "peerIp": "",
+                    "profileUid": "a1b2c3d4e5f6",
+                    "publicKey": "",
+                    "regionId": "us-east",
+                    "regionName": "US East",
+                    "serverHostname": "useast401",
+                    "serverIp": "198.51.100.10",
+                    "status": "ready",
+                    "uid": "e1f2a3b4"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/pia/egresses/{uid}/dependencies": {
+      "get": {
+        "tags": [
+          "PIA managed egress"
+        ],
+        "summary": "List routing, balancer, panel, node, and mtproto references to this outbound tag.",
+        "operationId": "get_panel_api_pia_egresses_uid_dependencies",
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Egress uid.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PiaDependencyView"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": [
+                    {
+                      "field": "outboundTag",
+                      "kind": "routing_rule",
+                      "label": "rule 3"
+                    }
+                  ]
                 }
               }
             }

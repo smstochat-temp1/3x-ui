@@ -31,6 +31,7 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service/email"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service/panel"
+	"github.com/mhsanaei/3x-ui/v3/internal/web/service/pia"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service/tgbot"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/websocket"
 	"github.com/mhsanaei/3x-ui/v3/internal/xray"
@@ -487,6 +488,8 @@ func (s *Server) start(restartXray bool, startTgBot bool) (err error) {
 		return err
 	}
 	service.StartTrafficWriter()
+	pia.RegisterSource()
+	go pia.Default().Reconcile()
 
 	// SkipIfStillRunning stops a slow job (e.g. the 5s traffic poll on a large
 	// install) from overlapping itself: two concurrent runs of the same job race

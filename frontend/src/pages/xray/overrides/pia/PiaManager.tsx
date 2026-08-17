@@ -1,0 +1,452 @@
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Alert,
+  Button,
+  Drawer,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  Select,
+  Space,
+  Steps,
+  Table,
+  Tag,
+  Typography,
+} from 'antd';
+
+import { keys } from '@/api/queryKeys';
+import {
+  piaDelete,
+  piaGet,
+  piaPost,
+  piaSchemas,
+  type PiaCatalogStatus,
+  type PiaDependency,
+  type PiaEgress,
+  type PiaProfile,
+  type PiaRegion,
+  type PiaServer,
+  type PiaStatus,
+} from './pia-api';
+
+const { Text } = Typography;
+
+interface PiaManagerProps {
+  open: boolean;
+  onClose: () => void;
+  onChanged?: () => void;
+}
+
+export default function PiaManager({ open, onClose, onChanged }: PiaManagerProps) {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [error, setError] = useState('');
+  const [wizardOpen, setWizardOpen] = useState(false);
+
+  const statusQuery = useQuery({
+    queryKey: keys.pia.status(),
+    queryFn: async () => {
+      const msg = await piaGet<PiaStatus>('/panel/api/pia/status', piaSchemas.status);
+      if (!msg.success || !msg.obj) throw new Error(msg.msg || 'status');
+      return msg.obj;
+    },
+    enabled: open,
+  });
+  const enabled = Boolean(statusQuery.data?.enabled);
+
+  const profilesQuery = useQuery({
+    queryKey: keys.pia.profiles(),
+    queryFn: async () => {
+      const msg = await piaGet<PiaProfile[]>('/panel/api/pia/profiles', piaSchemas.profiles);
+      if (!msg.success) throw new Error(msg.msg);
+      return Array.isArray(msg.obj) ? msg.obj : [];
+    },
+    enabled: open && enabled,
+  });
+  const egressesQuery = useQuery({
+    queryKey: keys.pia.egresses(),
+    queryFn: async () => {
+      const msg = await piaGet<PiaEgress[]>('/panel/api/pia/egresses', piaSchemas.egresses);
+      if (!msg.success) throw new Error(msg.msg);
+      return Array.isArray(msg.obj) ? msg.obj : [];
+    },
+    enabled: open && enabled,
+  });
+  const catalogQuery = useQuery({
+    queryKey: keys.pia.catalog(),
+    queryFn: async () => {
+      const msg = await piaGet<PiaCatalogStatus>('/panel/api/pia/catalog/status', piaSchemas.catalog);
+      if (!msg.success) throw new Error(msg.msg);
+      return msg.obj;
+    },
+    enabled: open && enabled,
+  });
+
+  const status = statusQuery.data ?? null;
+  const profiles = profilesQuery.data ?? [];
+  const egresses = egressesQuery.data ?? [];
+  const catalog = catalogQuery.data ?? null;
+
+  async function reload() {
+    await queryClient.invalidateQueries({ queryKey: keys.pia.root() });
+  }
+
+  useEffect(() => {
+    if (statusQuery.error) setError((statusQuery.error as Error).message);
+    else if (profilesQuery.error) setError((profilesQuery.error as Error).message);
+    else if (egressesQuery.error) setError((egressesQuery.error as Error).message);
+  }, [statusQuery.error, profilesQuery.error, egressesQuery.error]);
+
+  async function addProfile() {
+    const name = window.prompt(t('pages.xray.pia.profileName'));
+    if (!name) return;
+    const msg = await piaPost<PiaProfile>('/panel/api/pia/profiles', { name }, piaSchemas.profile);
+    if (!msg.success) {
+      setError(msg.msg);
+      return;
+    }
+    setError('');
+    await reload();
+  }
+
+  async function authenticate(uid: string) {
+    const username = window.prompt(t('pages.xray.pia.username'));
+    if (!username) return;
+    const password = window.prompt(t('pages.xray.pia.password'));
+    if (!password) return;
+    const msg = await piaPost(`/panel/api/pia/profiles/${uid}/authenticate`, { username, password });
+    setError(msg.success ? '' : msg.msg);
+    await reload();
+  }
+
+  async function refreshCatalog() {
+    const msg = await piaPost('/panel/api/pia/catalog/refresh', undefined, piaSchemas.catalog);
+    setError(msg.success ? '' : msg.msg);
+    await reload();
+  }
+
+  async function provision(uid: string) {
+    const msg = await piaPost(`/panel/api/pia/egresses/${uid}/provision`, undefined, piaSchemas.egress);
+    setError(msg.success ? '' : msg.msg);
+    await reload();
+    onChanged?.();
+  }
+
+  async function rotateKey(uid: string) {
+    const msg = await piaPost(`/panel/api/pia/egresses/${uid}/rotate-key`, undefined, piaSchemas.egress);
+    setError(msg.success ? '' : msg.msg);
+    await reload();
+    onChanged?.();
+  }
+
+  async function testEgress(uid: string) {
+    const msg = await piaPost(`/panel/api/pia/egresses/${uid}/test`, { mode: 'http' });
+    setError(msg.success ? '' : msg.msg);
+  }
+
+  async function disableOrDelete(uid: string, kind: 'disable' | 'delete') {
+    const depsMsg = await piaGet<PiaDependency[]>(`/panel/api/pia/egresses/${uid}/dependencies`, piaSchemas.dependencies);
+    const deps = depsMsg.success && Array.isArray(depsMsg.obj) ? depsMsg.obj : [];
+    let replacementTag = '';
+    let deleteRules = false;
+    if (deps.length > 0) {
+      const ok = await new Promise<boolean>((resolve) => {
+        Modal.confirm({
+          title: t('pages.xray.pia.dependencyTitle'),
+          content: (
+            <Space orientation="vertical">
+              <Text>{t('pages.xray.pia.dependencyHint')}</Text>
+              <ul>
+                {deps.map((d) => (
+                  <li key={`${d.kind}-${d.label}`}>{`${d.kind}: ${d.label}`}</li>
+                ))}
+              </ul>
+              <Input
+                placeholder={t('pages.xray.pia.replacementTag')}
+                onChange={(e) => {
+                  replacementTag = e.target.value;
+                }}
+              />
+            </Space>
+          ),
+          okText: t('pages.xray.pia.deleteRules'),
+          cancelText: t('cancel'),
+          onOk: () => {
+            if (!replacementTag) deleteRules = true;
+            resolve(true);
+          },
+          onCancel: () => resolve(false),
+        });
+      });
+      if (!ok) return;
+    }
+    const q = new URLSearchParams();
+    if (replacementTag) q.set('replacementTag', replacementTag);
+    if (deleteRules) q.set('deleteRules', 'true');
+    const qs = q.toString() ? `?${q.toString()}` : '';
+    const msg =
+      kind === 'delete'
+        ? await piaDelete(`/panel/api/pia/egresses/${uid}${qs}`)
+        : await piaPost(`/panel/api/pia/egresses/${uid}/disable`, { replacementTag, deleteRules });
+    setError(msg.success ? '' : msg.msg);
+    await reload();
+    onChanged?.();
+  }
+
+  return (
+    <Drawer
+      title={t('pages.xray.pia.title')}
+      open={open}
+      onClose={onClose}
+      width={920}
+      destroyOnHidden
+    >
+      <Space orientation="vertical" size="large" style={{ width: '100%' }}>
+        {status && !status.enabled && <Alert type="warning" showIcon message={t('pages.xray.pia.disabledHint')} />}
+        {status && status.enabled && !status.secretboxReady && (
+          <Alert type="error" showIcon message={t('pages.xray.pia.encryptionHint')} />
+        )}
+        {error && <Alert type="error" showIcon message={error} />}
+        <Space wrap>
+          <Button onClick={() => void reload()}>{t('refresh')}</Button>
+          <Button onClick={() => void refreshCatalog()}>{t('pages.xray.pia.refreshCatalog')}</Button>
+          <Button onClick={() => void addProfile()}>{t('pages.xray.pia.addProfile')}</Button>
+          <Button type="primary" onClick={() => setWizardOpen(true)} disabled={!status?.enabled}>
+            {t('pages.xray.pia.addEgress')}
+          </Button>
+        </Space>
+        <Text type="secondary">
+          {t('pages.xray.pia.catalogStatus', {
+            fresh: catalog?.fresh ? t('pages.xray.pia.fresh') : t('pages.xray.pia.stale'),
+            regions: catalog?.regionCount ?? 0,
+            servers: catalog?.serverCount ?? 0,
+          })}
+        </Text>
+        <Table
+          size="small"
+          rowKey="uid"
+          pagination={false}
+          dataSource={profiles}
+          columns={[
+            { title: t('pages.xray.pia.profileName'), dataIndex: 'name' },
+            { title: t('pages.xray.pia.accountHint'), dataIndex: 'accountHint' },
+            { title: t('status'), dataIndex: 'authStatus', render: (v: string) => <Tag>{v}</Tag> },
+            {
+              title: t('pages.xray.pia.signIn'),
+              render: (_: unknown, row: PiaProfile) => (
+                <Button size="small" onClick={() => void authenticate(row.uid)}>
+                  {t('pages.xray.pia.signIn')}
+                </Button>
+              ),
+            },
+          ]}
+        />
+        <Table
+          size="small"
+          rowKey="uid"
+          pagination={false}
+          dataSource={egresses}
+          columns={[
+            { title: t('pages.xray.pia.colTag'), dataIndex: 'outboundTag' },
+            { title: t('pages.xray.pia.colName'), dataIndex: 'name' },
+            { title: t('pages.xray.pia.colRegion'), dataIndex: 'regionName' },
+            { title: t('status'), dataIndex: 'status', render: (v: string) => <Tag>{v}</Tag> },
+            {
+              title: t('more'),
+              render: (_: unknown, row: PiaEgress) => (
+                <Space wrap>
+                  <Button size="small" onClick={() => void provision(row.uid)}>
+                    {t('pages.xray.pia.provision')}
+                  </Button>
+                  <Button size="small" onClick={() => void rotateKey(row.uid)}>
+                    {t('pages.xray.pia.rotateKey')}
+                  </Button>
+                  <Button size="small" onClick={() => void testEgress(row.uid)}>
+                    {t('pages.xray.pia.test')}
+                  </Button>
+                  <Button size="small" danger onClick={() => void disableOrDelete(row.uid, 'delete')}>
+                    {t('delete')}
+                  </Button>
+                </Space>
+              ),
+            },
+          ]}
+        />
+        <Alert type="info" showIcon message={t('pages.xray.pia.ipv6Warning')} />
+      </Space>
+      <EgressWizard
+        open={wizardOpen}
+        profiles={profiles}
+        onClose={() => setWizardOpen(false)}
+        onCreated={async () => {
+          setWizardOpen(false);
+          await reload();
+          onChanged?.();
+        }}
+      />
+    </Drawer>
+  );
+}
+
+function EgressWizard({
+  open,
+  profiles,
+  onClose,
+  onCreated,
+}: {
+  open: boolean;
+  profiles: PiaProfile[];
+  onClose: () => void;
+  onCreated: () => void;
+}) {
+  const { t } = useTranslation();
+  const [step, setStep] = useState(0);
+  const [profileUid, setProfileUid] = useState<string>();
+  const [regionId, setRegionId] = useState<string>();
+  const [hostname, setHostname] = useState<string>();
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
+
+  const regionsQuery = useQuery({
+    queryKey: keys.pia.regions(),
+    queryFn: async () => {
+      const msg = await piaGet<PiaRegion[]>('/panel/api/pia/catalog/regions', piaSchemas.regions);
+      return Array.isArray(msg.obj) ? msg.obj : [];
+    },
+    enabled: open,
+  });
+  const serversQuery = useQuery({
+    queryKey: keys.pia.servers(regionId || ''),
+    queryFn: async () => {
+      const msg = await piaGet<PiaServer[]>(`/panel/api/pia/catalog/regions/${regionId}/servers`, piaSchemas.servers);
+      return Array.isArray(msg.obj) ? msg.obj : [];
+    },
+    enabled: open && Boolean(regionId),
+  });
+  const regions = regionsQuery.data ?? [];
+  const servers = serversQuery.data ?? [];
+
+  useEffect(() => {
+    if (!open) return;
+    setStep(0);
+    setError('');
+    setProfileUid(undefined);
+    setRegionId(undefined);
+    setHostname(undefined);
+    setName('');
+  }, [open]);
+
+  async function finish() {
+    if (!profileUid || !regionId) return;
+    const created = await piaPost<PiaEgress>('/panel/api/pia/egresses', {
+      profileUid,
+      regionId,
+      serverHostname: hostname,
+      name,
+      ipv6Policy: 'block',
+    }, piaSchemas.egress);
+    if (!created.success || !created.obj?.uid) {
+      setError(created.msg);
+      return;
+    }
+    const provisioned = await piaPost(`/panel/api/pia/egresses/${created.obj.uid}/provision`, undefined, piaSchemas.egress);
+    if (!provisioned.success) {
+      setError(provisioned.msg);
+      return;
+    }
+    onCreated();
+  }
+
+  function canNext() {
+    if (step === 0) return Boolean(profileUid);
+    if (step === 1) return Boolean(regionId);
+    return true;
+  }
+
+  return (
+    <Modal open={open} onCancel={onClose} footer={null} title={t('pages.xray.pia.wizardTitle')} width={640} destroyOnHidden>
+      <Space orientation="vertical" style={{ width: '100%' }} size="middle">
+        <Steps
+          current={step}
+          size="small"
+          items={[
+            { title: t('pages.xray.pia.stepProfile') },
+            { title: t('pages.xray.pia.stepRegion') },
+            { title: t('pages.xray.pia.stepServer') },
+            { title: t('pages.xray.pia.stepOptions') },
+            { title: t('pages.xray.pia.stepReview') },
+          ]}
+        />
+        {error && <Alert type="error" showIcon message={error} />}
+        {step === 0 && (
+          <Select
+            style={{ width: '100%' }}
+            placeholder={t('pages.xray.pia.stepProfile')}
+            value={profileUid}
+            onChange={setProfileUid}
+            options={profiles.map((p) => ({ value: p.uid, label: p.name }))}
+          />
+        )}
+        {step === 1 && (
+          <Select
+            style={{ width: '100%' }}
+            showSearch
+            placeholder={t('pages.xray.pia.stepRegion')}
+            value={regionId}
+            onChange={(id) => {
+              setRegionId(id);
+              setHostname(undefined);
+            }}
+            options={regions.map((r) => ({ value: r.id, label: `${r.name} (${r.id})` }))}
+          />
+        )}
+        {step === 2 && (
+          <Select
+            style={{ width: '100%' }}
+            showSearch
+            allowClear
+            placeholder={t('pages.xray.pia.stepServer')}
+            value={hostname}
+            onChange={setHostname}
+            options={servers.map((s) => ({ value: s.hostname, label: `${s.hostname} (${s.ip})` }))}
+          />
+        )}
+        {step === 3 && (
+          <Form layout="vertical">
+            <Form.Item label={t('pages.xray.pia.colName')}>
+              <Input value={name} onChange={(e) => setName(e.target.value)} />
+            </Form.Item>
+            <Form.Item label={t('pages.xray.pia.mtu')}>
+              <InputNumber value={1420} disabled />
+            </Form.Item>
+            <Alert type="warning" showIcon message={t('pages.xray.pia.ipv6Warning')} />
+          </Form>
+        )}
+        {step === 4 && (
+          <Space orientation="vertical">
+            <Text>{`${t('pages.xray.pia.stepProfile')}: ${profiles.find((p) => p.uid === profileUid)?.name || ''}`}</Text>
+            <Text>{`${t('pages.xray.pia.stepRegion')}: ${regionId || ''}`}</Text>
+            <Text>{`${t('pages.xray.pia.stepServer')}: ${hostname || ''}`}</Text>
+          </Space>
+        )}
+        <Space>
+          <Button disabled={step === 0} onClick={() => setStep((s) => s - 1)}>
+            {t('pages.xray.pia.back')}
+          </Button>
+          {step < 4 ? (
+            <Button type="primary" disabled={!canNext()} onClick={() => setStep((s) => s + 1)}>
+              {t('pages.xray.pia.next')}
+            </Button>
+          ) : (
+            <Button type="primary" onClick={() => void finish()}>
+              {t('pages.xray.pia.provision')}
+            </Button>
+          )}
+        </Space>
+      </Space>
+    </Modal>
+  );
+}

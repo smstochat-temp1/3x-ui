@@ -60,6 +60,14 @@ icon: Variable
 | ------------------------ | ------- | --------------------- |
 | `XRAY_VMESS_AEAD_FORCED` | `false` | 强制启用 VMess AEAD。 |
 
+## PIA 受管出口
+
+默认关闭。写入 PIA token 或 WireGuard 私钥前，需要开启节点 token 加密（`NODE_TOKEN_ENCRYPTION=migration|required`，密钥文件权限 `0600`，或设置 `XUI_NODE_TOKEN_KEY`）。没有密钥环的备份无法解密。参见 [出站与路由](/docs/operations/outbounds-routing)。
+
+| Variable           | Default | Description                                                                 |
+| ------------------ | ------- | --------------------------------------------------------------------------- |
+| `XUI_PIA_ENABLED`  | `false` | 启用 PIA 管理器 API/UI，并注入已就绪的 PIA WireGuard 出站。                 |
+
 ## 隧道健康监测器
 
 可选的看门狗：它探测一个 URL（可选择**经由**本地 Xray 入站进行），并在反复

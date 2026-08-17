@@ -2811,6 +2811,385 @@ export const SCHEMAS: Record<string, unknown> = {
     ],
     "type": "object"
   },
+  "PiaBindingView": {
+    "properties": {
+      "active": {
+        "example": true,
+        "type": "boolean"
+      },
+      "generation": {
+        "example": 1,
+        "type": "integer"
+      },
+      "peerIp": {
+        "example": "10.0.0.2/32",
+        "type": "string"
+      },
+      "publicKey": {
+        "example": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+        "type": "string"
+      },
+      "serverHostname": {
+        "example": "useast401",
+        "type": "string"
+      },
+      "serverIp": {
+        "example": "198.51.100.10",
+        "type": "string"
+      },
+      "serverPort": {
+        "example": 1337,
+        "type": "integer"
+      },
+      "uid": {
+        "example": "b1c2d3e4",
+        "type": "string"
+      }
+    },
+    "required": [
+      "active",
+      "generation",
+      "peerIp",
+      "publicKey",
+      "serverHostname",
+      "serverIp",
+      "serverPort",
+      "uid"
+    ],
+    "type": "object"
+  },
+  "PiaCatalogStatusView": {
+    "properties": {
+      "fetchedAt": {
+        "example": 1760000000,
+        "format": "int64",
+        "type": "integer"
+      },
+      "fresh": {
+        "example": true,
+        "type": "boolean"
+      },
+      "lastErrorCode": {
+        "type": "string"
+      },
+      "lastErrorMessage": {
+        "type": "string"
+      },
+      "payloadSha256": {
+        "example": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "type": "string"
+      },
+      "regionCount": {
+        "example": 12,
+        "type": "integer"
+      },
+      "serverCount": {
+        "example": 40,
+        "type": "integer"
+      },
+      "signatureVerified": {
+        "example": true,
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "fetchedAt",
+      "fresh",
+      "lastErrorCode",
+      "lastErrorMessage",
+      "payloadSha256",
+      "regionCount",
+      "serverCount",
+      "signatureVerified"
+    ],
+    "type": "object"
+  },
+  "PiaDependencyView": {
+    "properties": {
+      "field": {
+        "example": "outboundTag",
+        "type": "string"
+      },
+      "kind": {
+        "example": "routing_rule",
+        "type": "string"
+      },
+      "label": {
+        "example": "rule 3",
+        "type": "string"
+      }
+    },
+    "required": [
+      "field",
+      "kind",
+      "label"
+    ],
+    "type": "object"
+  },
+  "PiaEgressView": {
+    "properties": {
+      "binding": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PiaBindingView"
+          }
+        ],
+        "nullable": true
+      },
+      "enabled": {
+        "example": true,
+        "type": "boolean"
+      },
+      "generation": {
+        "example": 1,
+        "type": "integer"
+      },
+      "hasActiveBinding": {
+        "example": true,
+        "type": "boolean"
+      },
+      "ipv6Policy": {
+        "example": "block",
+        "type": "string"
+      },
+      "keepaliveSeconds": {
+        "example": 25,
+        "type": "integer"
+      },
+      "lastErrorCode": {
+        "type": "string"
+      },
+      "lastErrorMessage": {
+        "type": "string"
+      },
+      "lastExternalIp": {
+        "type": "string"
+      },
+      "lastLatencyMs": {
+        "type": "integer"
+      },
+      "mtu": {
+        "example": 1420,
+        "type": "integer"
+      },
+      "name": {
+        "example": "US East",
+        "type": "string"
+      },
+      "outboundTag": {
+        "example": "pia-a1b2c3d4",
+        "type": "string"
+      },
+      "peerIp": {
+        "type": "string"
+      },
+      "profileUid": {
+        "example": "a1b2c3d4e5f6",
+        "type": "string"
+      },
+      "publicKey": {
+        "type": "string"
+      },
+      "regionId": {
+        "example": "us-east",
+        "type": "string"
+      },
+      "regionName": {
+        "example": "US East",
+        "type": "string"
+      },
+      "serverHostname": {
+        "example": "useast401",
+        "type": "string"
+      },
+      "serverIp": {
+        "example": "198.51.100.10",
+        "type": "string"
+      },
+      "status": {
+        "example": "ready",
+        "type": "string"
+      },
+      "uid": {
+        "example": "e1f2a3b4",
+        "type": "string"
+      }
+    },
+    "required": [
+      "enabled",
+      "generation",
+      "hasActiveBinding",
+      "ipv6Policy",
+      "keepaliveSeconds",
+      "lastErrorCode",
+      "lastErrorMessage",
+      "lastExternalIp",
+      "lastLatencyMs",
+      "mtu",
+      "name",
+      "outboundTag",
+      "peerIp",
+      "profileUid",
+      "publicKey",
+      "regionId",
+      "regionName",
+      "serverHostname",
+      "serverIp",
+      "status",
+      "uid"
+    ],
+    "type": "object"
+  },
+  "PiaErrorInfo": {
+    "properties": {
+      "code": {
+        "example": "pia_invalid_credentials",
+        "type": "string"
+      },
+      "details": {},
+      "operationId": {
+        "example": "provision",
+        "type": "string"
+      },
+      "retryable": {
+        "example": false,
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "code",
+      "retryable"
+    ],
+    "type": "object"
+  },
+  "PiaProfileView": {
+    "properties": {
+      "accountHint": {
+        "example": "p***34",
+        "type": "string"
+      },
+      "authStatus": {
+        "example": "valid",
+        "type": "string"
+      },
+      "enabled": {
+        "example": true,
+        "type": "boolean"
+      },
+      "hasToken": {
+        "example": true,
+        "type": "boolean"
+      },
+      "lastAuthErrorCode": {
+        "type": "string"
+      },
+      "lastAuthErrorMessage": {
+        "type": "string"
+      },
+      "lastAuthenticatedAt": {
+        "example": 1760000000,
+        "format": "int64",
+        "type": "integer"
+      },
+      "name": {
+        "example": "home",
+        "type": "string"
+      },
+      "revision": {
+        "example": 1,
+        "type": "integer"
+      },
+      "tokenExpiresAt": {
+        "example": 1760000000,
+        "format": "int64",
+        "type": "integer"
+      },
+      "uid": {
+        "example": "a1b2c3d4e5f6",
+        "type": "string"
+      }
+    },
+    "required": [
+      "accountHint",
+      "authStatus",
+      "enabled",
+      "hasToken",
+      "lastAuthErrorCode",
+      "lastAuthErrorMessage",
+      "lastAuthenticatedAt",
+      "name",
+      "revision",
+      "tokenExpiresAt",
+      "uid"
+    ],
+    "type": "object"
+  },
+  "PiaRegionView": {
+    "properties": {
+      "countryCode": {
+        "example": "US",
+        "type": "string"
+      },
+      "id": {
+        "example": "us-east",
+        "type": "string"
+      },
+      "name": {
+        "example": "US East",
+        "type": "string"
+      },
+      "serverCount": {
+        "example": 3,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "countryCode",
+      "id",
+      "name",
+      "serverCount"
+    ],
+    "type": "object"
+  },
+  "PiaServerView": {
+    "properties": {
+      "hostname": {
+        "example": "useast401",
+        "type": "string"
+      },
+      "ip": {
+        "example": "198.51.100.10",
+        "type": "string"
+      }
+    },
+    "required": [
+      "hostname",
+      "ip"
+    ],
+    "type": "object"
+  },
+  "PiaStatusView": {
+    "properties": {
+      "enabled": {
+        "example": false,
+        "type": "boolean"
+      },
+      "encryptionMode": {
+        "example": "required",
+        "type": "string"
+      },
+      "secretboxReady": {
+        "example": true,
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "enabled",
+      "encryptionMode",
+      "secretboxReady"
+    ],
+    "type": "object"
+  },
   "ProbeResultUI": {
     "properties": {
       "cpuPct": {

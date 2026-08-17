@@ -95,6 +95,10 @@ export default function GeneralTab({ allSetting, updateSetting }: GeneralTabProp
         for (const tag of subTags) {
           if (typeof tag === 'string' && tag) tags.add(tag);
         }
+        const piaTags = Array.isArray(payload.piaOutboundTags) ? payload.piaOutboundTags : [];
+        for (const tag of piaTags) {
+          if (typeof tag === 'string' && tag) tags.add(tag);
+        }
         const balancerTags: string[] = [];
         const routing = (template.routing || {}) as Record<string, unknown>;
         const balancers = Array.isArray(routing.balancers) ? routing.balancers : [];

@@ -214,6 +214,13 @@ func GetNodeTokenKeyEnv() string {
 	return "XUI_NODE_TOKEN_KEY"
 }
 
+// IsPIAEnabled reports whether managed PIA WireGuard egress is turned on.
+// Default is off so existing Nord/WARP/subscription setups are unchanged.
+func IsPIAEnabled() bool {
+	v := strings.ToLower(strings.TrimSpace(os.Getenv("XUI_PIA_ENABLED")))
+	return v == "1" || v == "true" || v == "yes"
+}
+
 // GetEnvFilePaths returns the candidate service environment file paths (the file
 // systemd loads via EnvironmentFile) across the supported distro families.
 func GetEnvFilePaths() []string {

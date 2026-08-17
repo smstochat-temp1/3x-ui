@@ -10,6 +10,7 @@
     "server",
     "settings",
     "xray-settings",
+    "pia-managed-egress",
     "subscription-server",
     "hosts",
     "nodes",

@@ -11,6 +11,7 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service/integration"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service/outbound"
+	"github.com/mhsanaei/3x-ui/v3/internal/web/service/pia"
 	"github.com/mhsanaei/3x-ui/v3/internal/xray"
 
 	"github.com/gin-gonic/gin"
@@ -123,6 +124,13 @@ func (a *XraySettingController) getXraySetting(c *gin.Context) {
 	}
 	if subTags, err := a.OutboundSubscriptionService.AllActiveOutboundTags(); err == nil && len(subTags) > 0 {
 		xrayResponse["subscriptionOutboundTags"] = subTags
+	}
+	piaSvc := pia.Default()
+	if tags := piaSvc.PublicTags(); len(tags) > 0 {
+		xrayResponse["piaOutboundTags"] = tags
+	}
+	if obs := piaSvc.PublicOutbounds(); len(obs) > 0 {
+		xrayResponse["piaOutbounds"] = obs
 	}
 	result, err := json.Marshal(xrayResponse)
 	if err != nil {
