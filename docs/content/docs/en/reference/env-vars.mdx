@@ -63,11 +63,7 @@ knobs — leave them unset unless you're tuning a constrained host.
 
 ## PIA managed egress
 
-Off by default. Requires node-token encryption (`NODE_TOKEN_ENCRYPTION=migration|required` and a keyring file mode `0600`, or `XUI_NODE_TOKEN_KEY`) before a PIA token or WireGuard private key can be stored. A backup without that keyring cannot be decrypted. The environment source always encrypts with key id `env`; when moving to a keyring file, include an `env` entry with the same key bytes so existing ciphertext remains readable. See [Outbounds & Routing](/docs/operations/outbounds-routing).
-
-| Variable           | Default | Description                                                                 |
-| ------------------ | ------- | --------------------------------------------------------------------------- |
-| `XUI_PIA_ENABLED`  | `false` | Enable the PIA manager API/UI and inject ready PIA WireGuard outbounds.     |
+PIA management is always available. Node-token encryption (`NODE_TOKEN_ENCRYPTION=migration|required` and a keyring file mode `0600`, or `XUI_NODE_TOKEN_KEY`) is required before a PIA token or WireGuard private key can be stored. A backup without that keyring cannot be decrypted. The environment source always encrypts with key id `env`; when moving to a keyring file, include an `env` entry with the same key bytes so existing ciphertext remains readable. See [Outbounds & Routing](/docs/operations/outbounds-routing).
 
 ## Tunnel health monitor
 

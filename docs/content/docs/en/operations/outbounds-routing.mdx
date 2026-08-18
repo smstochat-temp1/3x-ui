@@ -89,10 +89,11 @@ NordVPN outbound.
 ## PIA managed WireGuard egress
 
 Private Internet Access exits are **database-managed outbounds**, not a single
-template JSON object. Enable them with `XUI_PIA_ENABLED=true` and turn on
-node-token encryption (`NODE_TOKEN_ENCRYPTION=migration` or `required`). The
-keyring file must be mode `0600`, or set `XUI_NODE_TOKEN_KEY`. Tokens and
-WireGuard private keys are stored only as AES-GCM ciphertext.
+template JSON object. They are available alongside NordVPN and WARP. Turn on
+node-token encryption (`NODE_TOKEN_ENCRYPTION=migration` or `required`) before
+storing credentials or private keys. The keyring file must be mode `0600`, or
+set `XUI_NODE_TOKEN_KEY`. Tokens and WireGuard private keys are stored only as
+AES-GCM ciphertext.
 
 **Token vs data plane.** Signing in exchanges a PIA username/password for a
 short-lived token used only to call `/addKey`. The password is never stored.
@@ -103,7 +104,8 @@ From **Xray → Outbounds → More → PIA** open the manager:
 
 1. Create a profile and sign in (the password is not stored).
 2. Refresh the signed server list.
-3. Create one outbound per region/server. Each gets an immutable tag `pia-<id>`.
+3. Choose a country, region, and WireGuard server for each outbound. Each gets
+   an immutable tag `pia-<id>`.
 4. Provision registers a unique WireGuard key with PIA `/addKey`.
 5. Route or balance traffic to those tags. Ready outbounds are injected after
    subscription outbounds when Xray config is built.
@@ -122,17 +124,14 @@ process is left unchanged.
 
 - A database backup **without** the keyring cannot decrypt PIA tokens or
   private keys. Keep the keyring (mode `0600`) with the backup.
-- Restore: restore the database, restore the same keyring / `XUI_NODE_TOKEN_KEY`,
-  then start the panel with `XUI_PIA_ENABLED=true`.
+- Restore: restore the database and the same keyring / `XUI_NODE_TOKEN_KEY`, then
+  start the panel.
 - Rollback to a build without PIA:
 
   1. Remove or retarget routing, balancer, panel-egress, node-egress, and
      mtproto references to `pia-*` tags.
   2. Disable every PIA outbound (or delete them).
-  3. Set `XUI_PIA_ENABLED=false` and restart.
-  4. Then downgrade the panel binary.
-
-  With the flag off, Nord, WARP, and outbound subscriptions are unchanged.
+  3. Downgrade the panel binary.
 
 When migrating from `XUI_NODE_TOKEN_KEY` to a keyring file, keep the same key
 bytes under the key id `env`. Existing ciphertext records embed that fixed id
@@ -142,7 +141,6 @@ and cannot be decrypted if the file contains only differently named keys.
 
 | Code | Meaning |
 | --- | --- |
-| `pia_disabled` | `XUI_PIA_ENABLED` is not true. |
 | `pia_invalid_credentials` | Username/password rejected. |
 | `pia_token_rejected` | Token missing or expired — sign in again. |
 | `pia_catalog_signature_invalid` | Server list signature failed. |

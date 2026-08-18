@@ -85,19 +85,19 @@ NordVPN 出站。
 ## PIA 受管 WireGuard 出口
 
 Private Internet Access 出口是**数据库中的受管出站**，不是模板里的单个 JSON
-对象。设置 `XUI_PIA_ENABLED=true`，并开启节点 token 加密
-（`NODE_TOKEN_ENCRYPTION=migration` 或 `required`，密钥文件权限 `0600`，或
-`XUI_NODE_TOKEN_KEY`）。Token 与 WireGuard 私钥只以 AES-GCM 密文保存；没有
-密钥环的备份无法解密。
+对象，与 NordVPN 和 WARP 一样无需单独的功能开关。写入凭据或私钥前必须开启
+节点 token 加密（`NODE_TOKEN_ENCRYPTION=migration` 或 `required`，密钥文件
+权限 `0600`，或 `XUI_NODE_TOKEN_KEY`）。Token 与 WireGuard 私钥只以
+AES-GCM 密文保存；没有密钥环的备份无法解密。
 
 在 **Xray → 出站 → 更多 → PIA** 打开管理器：创建档案并登录（密码不落库）、
-刷新已验签的服务器列表、按区域/服务器创建出站（不可变标签 `pia-<id>`）、
+刷新已验签的服务器列表、依次选择国家/区域/服务器创建出站（不可变标签 `pia-<id>`）、
 向 PIA `/addKey` 注册独立密钥，再把流量路由到这些标签。已就绪的出站在订阅
 出站之后注入。
 
 对端 `allowedIPs` 仅为 `0.0.0.0/0`（IPv4）。现有路由不会自动改写。删除仍被
 引用的标签会失败，直到你提供替代标签或删除相关规则。回滚：先禁用/删除所有
-PIA 出站并清引用，设 `XUI_PIA_ENABLED=false`，再降级面板二进制。
+PIA 出站并清除引用，再降级面板二进制。
 
 ## 出站订阅（服务器池）
 

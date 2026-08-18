@@ -759,7 +759,6 @@ export const EXAMPLES: Record<string, unknown> = {
     "ip": "198.51.100.10"
   },
   "PiaStatusView": {
-    "enabled": false,
     "encryptionMode": "required",
     "secretboxReady": true
   },

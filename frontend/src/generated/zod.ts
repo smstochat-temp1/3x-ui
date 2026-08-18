@@ -783,7 +783,6 @@ export const PiaServerViewSchema = z.object({
 export type PiaServerView = z.infer<typeof PiaServerViewSchema>;
 
 export const PiaStatusViewSchema = z.object({
-  enabled: z.boolean(),
   encryptionMode: z.string(),
   secretboxReady: z.boolean(),
 });

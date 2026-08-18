@@ -80,13 +80,6 @@ func (s *Service) now() time.Time {
 	return time.Now()
 }
 
-func (s *Service) requireEnabled() error {
-	if !config.IsPIAEnabled() {
-		return piaprotocol.NewError(piaprotocol.CodeDisabled, "PIA managed egress is disabled. Set XUI_PIA_ENABLED=true.")
-	}
-	return nil
-}
-
 func (s *Service) requireBox() (*secretbox.Codec, error) {
 	box := s.box()
 	if box == nil || !box.Enabled() {
@@ -98,7 +91,6 @@ func (s *Service) requireBox() (*secretbox.Codec, error) {
 func (s *Service) Status() map[string]any {
 	box := s.box()
 	return map[string]any{
-		"enabled":        config.IsPIAEnabled(),
 		"secretboxReady": box != nil && box.Enabled(),
 		"encryptionMode": config.GetNodeTokenEncryptionMode(),
 	}
@@ -188,9 +180,6 @@ type ServerView struct {
 }
 
 func (s *Service) ListProfiles() ([]ProfileView, error) {
-	if err := s.requireEnabled(); err != nil {
-		return nil, err
-	}
 	var rows []model.PiaProfile
 	if err := database.GetDB().Order("id asc").Find(&rows).Error; err != nil {
 		return nil, err
@@ -203,9 +192,6 @@ func (s *Service) ListProfiles() ([]ProfileView, error) {
 }
 
 func (s *Service) CreateProfile(name string) (*ProfileView, error) {
-	if err := s.requireEnabled(); err != nil {
-		return nil, err
-	}
 	name = strings.TrimSpace(name)
 	if name == "" {
 		return nil, piaprotocol.NewError(piaprotocol.CodeInvalidInput, "Profile name is required.")
@@ -219,9 +205,6 @@ func (s *Service) CreateProfile(name string) (*ProfileView, error) {
 }
 
 func (s *Service) PatchProfile(uid, name string, enabled *bool) (*ProfileView, error) {
-	if err := s.requireEnabled(); err != nil {
-		return nil, err
-	}
 	row, err := s.profileByUID(uid)
 	if err != nil {
 		return nil, err
@@ -241,9 +224,6 @@ func (s *Service) PatchProfile(uid, name string, enabled *bool) (*ProfileView, e
 }
 
 func (s *Service) DeleteProfile(uid string) error {
-	if err := s.requireEnabled(); err != nil {
-		return err
-	}
 	row, err := s.profileByUID(uid)
 	if err != nil {
 		return err
@@ -279,9 +259,6 @@ func (s *Service) DeleteProfile(uid string) error {
 }
 
 func (s *Service) Authenticate(ctx context.Context, uid, username string, password []byte) (*ProfileView, error) {
-	if err := s.requireEnabled(); err != nil {
-		return nil, err
-	}
 	box, err := s.requireBox()
 	if err != nil {
 		return nil, err
@@ -326,9 +303,6 @@ func (s *Service) Authenticate(ctx context.Context, uid, username string, passwo
 }
 
 func (s *Service) CatalogStatus() (*CatalogStatusView, error) {
-	if err := s.requireEnabled(); err != nil {
-		return nil, err
-	}
 	snap, _ := s.loadSnapshot()
 	view := &CatalogStatusView{}
 	if snap != nil {
@@ -346,9 +320,6 @@ func (s *Service) CatalogStatus() (*CatalogStatusView, error) {
 }
 
 func (s *Service) RefreshCatalog(ctx context.Context) (*CatalogStatusView, error) {
-	if err := s.requireEnabled(); err != nil {
-		return nil, err
-	}
 	if _, err := s.fetchCatalog(ctx, true); err != nil {
 		return nil, err
 	}
@@ -356,9 +327,6 @@ func (s *Service) RefreshCatalog(ctx context.Context) (*CatalogStatusView, error
 }
 
 func (s *Service) ListRegions(ctx context.Context) ([]RegionView, error) {
-	if err := s.requireEnabled(); err != nil {
-		return nil, err
-	}
 	regions, err := s.regions(ctx)
 	if err != nil {
 		return nil, err
@@ -371,9 +339,6 @@ func (s *Service) ListRegions(ctx context.Context) ([]RegionView, error) {
 }
 
 func (s *Service) ListServers(ctx context.Context, regionID string) ([]ServerView, error) {
-	if err := s.requireEnabled(); err != nil {
-		return nil, err
-	}
 	region, err := s.regionByID(ctx, regionID)
 	if err != nil {
 		return nil, err
@@ -396,9 +361,6 @@ type CreateEgressInput struct {
 }
 
 func (s *Service) CreateEgress(ctx context.Context, in CreateEgressInput) (*EgressView, error) {
-	if err := s.requireEnabled(); err != nil {
-		return nil, err
-	}
 	profile, err := s.profileByUID(in.ProfileUID)
 	if err != nil {
 		return nil, err
@@ -451,9 +413,6 @@ func (s *Service) CreateEgress(ctx context.Context, in CreateEgressInput) (*Egre
 }
 
 func (s *Service) ListEgresses() ([]EgressView, error) {
-	if err := s.requireEnabled(); err != nil {
-		return nil, err
-	}
 	var rows []model.PiaEgress
 	if err := database.GetDB().Order("id asc").Find(&rows).Error; err != nil {
 		return nil, err
@@ -470,9 +429,6 @@ func (s *Service) ListEgresses() ([]EgressView, error) {
 }
 
 func (s *Service) GetEgress(uid string) (*EgressView, error) {
-	if err := s.requireEnabled(); err != nil {
-		return nil, err
-	}
 	row, err := s.egressByUID(uid)
 	if err != nil {
 		return nil, err
@@ -481,9 +437,6 @@ func (s *Service) GetEgress(uid string) (*EgressView, error) {
 }
 
 func (s *Service) PatchEgress(uid, name string, mtu int, keepalive *int, ipv6 string) (*EgressView, error) {
-	if err := s.requireEnabled(); err != nil {
-		return nil, err
-	}
 	row, err := s.egressByUID(uid)
 	if err != nil {
 		return nil, err
@@ -507,9 +460,6 @@ func (s *Service) PatchEgress(uid, name string, mtu int, keepalive *int, ipv6 st
 }
 
 func (s *Service) DeleteEgress(uid, replacement string, deleteRules bool) error {
-	if err := s.requireEnabled(); err != nil {
-		return err
-	}
 	unlock := s.lockKey(&s.egressMu, uid)
 	defer unlock()
 	row, err := s.egressByUID(uid)
@@ -535,9 +485,6 @@ func (s *Service) DeleteEgress(uid, replacement string, deleteRules bool) error 
 }
 
 func (s *Service) SetEnabled(uid string, enabled bool, replacement string, deleteRules bool) (*EgressView, error) {
-	if err := s.requireEnabled(); err != nil {
-		return nil, err
-	}
 	unlock := s.lockKey(&s.egressMu, uid)
 	defer unlock()
 	row, err := s.egressByUID(uid)
@@ -585,9 +532,6 @@ func (s *Service) Reprovision(ctx context.Context, uid string) (*EgressView, err
 }
 
 func (s *Service) provision(ctx context.Context, uid string) (*EgressView, error) {
-	if err := s.requireEnabled(); err != nil {
-		return nil, err
-	}
 	box, err := s.requireBox()
 	if err != nil {
 		return nil, err
@@ -679,9 +623,6 @@ func (s *Service) provision(ctx context.Context, uid string) (*EgressView, error
 }
 
 func (s *Service) TestByTag(ctx context.Context, uid, testURL, mode string) (*outbound.TestOutboundResult, error) {
-	if err := s.requireEnabled(); err != nil {
-		return nil, err
-	}
 	box, err := s.requireBox()
 	if err != nil {
 		return nil, err
@@ -737,9 +678,6 @@ func (s *Service) TestByTag(ctx context.Context, uid, testURL, mode string) (*ou
 }
 
 func (s *Service) Dependencies(uid string) ([]Dependency, error) {
-	if err := s.requireEnabled(); err != nil {
-		return nil, err
-	}
 	row, err := s.egressByUID(uid)
 	if err != nil {
 		return nil, err
@@ -748,9 +686,6 @@ func (s *Service) Dependencies(uid string) ([]Dependency, error) {
 }
 
 func (s *Service) Reconcile() {
-	if !config.IsPIAEnabled() {
-		return
-	}
 	var rows []model.PiaEgress
 	if err := database.GetDB().Find(&rows).Error; err != nil {
 		logger.Warningf("provider=pia operation=reconcile error=%v", err)
@@ -788,9 +723,6 @@ func (s *Service) Reconcile() {
 }
 
 func (s *Service) ReadyOutbounds() ([]any, []string, error) {
-	if !config.IsPIAEnabled() {
-		return nil, nil, nil
-	}
 	var rows []model.PiaEgress
 	if err := database.GetDB().Where("enabled = ? AND status = ?", true, model.PiaEgressReady).Find(&rows).Error; err != nil {
 		return nil, nil, err
@@ -833,9 +765,6 @@ func (s *Service) ReadyOutbounds() ([]any, []string, error) {
 }
 
 func (s *Service) MarkReadyOutboundsApplied() error {
-	if !config.IsPIAEnabled() {
-		return nil
-	}
 	var egressIDs []int
 	if err := database.GetDB().Model(&model.PiaEgress{}).
 		Where("enabled = ? AND status = ?", true, model.PiaEgressReady).
@@ -848,9 +777,6 @@ func (s *Service) MarkReadyOutboundsApplied() error {
 }
 
 func (s *Service) PublicOutbounds() []map[string]any {
-	if !config.IsPIAEnabled() {
-		return nil
-	}
 	var rows []model.PiaEgress
 	if err := database.GetDB().Where("enabled = ?", true).Find(&rows).Error; err != nil {
 		return nil
@@ -863,9 +789,6 @@ func (s *Service) PublicOutbounds() []map[string]any {
 }
 
 func (s *Service) PublicTags() []string {
-	if !config.IsPIAEnabled() {
-		return nil
-	}
 	var rows []model.PiaEgress
 	if err := database.GetDB().Where("enabled = ? AND status = ?", true, model.PiaEgressReady).Find(&rows).Error; err != nil {
 		return nil

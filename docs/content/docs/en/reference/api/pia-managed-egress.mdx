@@ -1,17 +1,17 @@
 ---
 title: PIA managed egress
 description: Database-managed Private Internet Access WireGuard outbounds.
-  Disabled until XUI_PIA_ENABLED=true and node-token encryption is on. Secrets
-  (password, token, private key) never appear in responses. Admin session or
-  admin API token only.
+  Node-token encryption is required before credentials or private keys can be
+  stored. Secrets (password, token, private key) never appear in responses.
+  Admin session or admin API token only.
 full: true
 _openapi:
   preload:
     - ./public/openapi.json
   toc:
     - depth: 2
-      title: Report whether PIA is enabled and whether the secretbox keyring is ready.
-      url: '#report-whether-pia-is-enabled-and-whether-the-secretbox-keyring-is-ready'
+      title: Report whether the secretbox keyring is ready for PIA secrets.
+      url: '#report-whether-the-secretbox-keyring-is-ready-for-pia-secrets'
     - depth: 2
       title: List PIA account profiles (no token material).
       url: '#list-pia-account-profiles-no-token-material'
@@ -84,9 +84,8 @@ _openapi:
       url: '#list-routing-balancer-panel-node-and-mtproto-references-to-this-outbound-tag'
   structuredData:
     headings:
-      - content: Report whether PIA is enabled and whether the secretbox keyring is
-          ready.
-        id: report-whether-pia-is-enabled-and-whether-the-secretbox-keyring-is-ready
+      - content: Report whether the secretbox keyring is ready for PIA secrets.
+        id: report-whether-the-secretbox-keyring-is-ready-for-pia-secrets
       - content: List PIA account profiles (no token material).
         id: list-pia-account-profiles-no-token-material
       - content: Create a PIA account profile.

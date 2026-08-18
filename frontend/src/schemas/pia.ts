@@ -1,7 +1,6 @@
 import { z } from 'zod';
 
 export const PiaStatusSchema = z.object({
-  enabled: z.boolean(),
   secretboxReady: z.boolean(),
   encryptionMode: z.string().optional(),
 }).loose();
@@ -21,7 +20,7 @@ export type PiaProfile = z.infer<typeof PiaProfileSchema>;
 export const PiaRegionSchema = z.object({
   id: z.string(),
   name: z.string(),
-  countryCode: z.string().optional(),
+  countryCode: z.string(),
   serverCount: z.number().optional(),
 }).loose();
 export type PiaRegion = z.infer<typeof PiaRegionSchema>;

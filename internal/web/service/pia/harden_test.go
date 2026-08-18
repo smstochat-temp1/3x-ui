@@ -41,6 +41,14 @@ func TestMissingKeyringSkipsReadyOutbounds(t *testing.T) {
 	if len(ready) != 0 || len(skipped) != 1 {
 		t.Fatalf("want skip without keyring, ready=%d skipped=%v", len(ready), skipped)
 	}
+	svc.Reconcile()
+	got, err := svc.GetEgress(e.UID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.LastErrorCode != piaprotocol.CodeEncryptionRequired {
+		t.Fatalf("reconcile must mark the missing keyring, got %+v", got)
+	}
 }
 
 func TestProfileViewDoesNotContainPassword(t *testing.T) {

@@ -28,7 +28,6 @@ func TestBindPIAJSONRejectsOversizedBody(t *testing.T) {
 }
 
 func TestPIAMutationHandlersRejectMalformedJSON(t *testing.T) {
-	t.Setenv("XUI_PIA_ENABLED", "true")
 	gin.SetMode(gin.TestMode)
 	engine := gin.New()
 	NewPIAController(engine.Group("/panel/api/pia"))
@@ -52,7 +51,6 @@ func TestPIAMutationHandlersRejectMalformedJSON(t *testing.T) {
 }
 
 func TestPIAControllerOmitsCiphertext(t *testing.T) {
-	t.Setenv("XUI_PIA_ENABLED", "true")
 	gin.SetMode(gin.TestMode)
 	if err := database.InitDB(filepath.Join(t.TempDir(), "x-ui.db")); err != nil {
 		t.Fatal(err)

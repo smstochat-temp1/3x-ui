@@ -8,7 +8,6 @@ type PiaErrorInfo struct {
 }
 
 type PiaStatusView struct {
-	Enabled        bool   `json:"enabled" example:"false"`
 	SecretboxReady bool   `json:"secretboxReady" example:"true"`
 	EncryptionMode string `json:"encryptionMode" example:"required"`
 }

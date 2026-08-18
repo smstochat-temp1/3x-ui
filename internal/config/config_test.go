@@ -25,21 +25,6 @@ func TestGetPanelVersion(t *testing.T) {
 	}
 }
 
-func TestIsPIAEnabled(t *testing.T) {
-	t.Setenv("XUI_PIA_ENABLED", "")
-	if IsPIAEnabled() {
-		t.Fatal("empty XUI_PIA_ENABLED must be off")
-	}
-	t.Setenv("XUI_PIA_ENABLED", "true")
-	if !IsPIAEnabled() {
-		t.Fatal("true must enable PIA")
-	}
-	t.Setenv("XUI_PIA_ENABLED", "0")
-	if IsPIAEnabled() {
-		t.Fatal("0 must keep PIA off")
-	}
-}
-
 func TestGetPortOverride(t *testing.T) {
 	tests := []struct {
 		name       string

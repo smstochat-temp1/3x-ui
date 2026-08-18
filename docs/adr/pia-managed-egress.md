@@ -21,11 +21,12 @@ singleton outbound authored in the Xray template JSON.
 7. Peer `allowedIPs` is IPv4-only (`0.0.0.0/0`). IPv6 is not claimed as a PIA
    tunnel. Existing routing rules are not auto-rewritten.
 
-## Feature flag
+## Availability
 
-`XUI_PIA_ENABLED` defaults to `false`. Routes exist so OpenAPI stays in
-contract with the router; writes and Xray injection no-op until enabled,
-and secretbox must be `migration` or `required` before a token is stored.
+PIA management is available alongside NordVPN and WARP without a separate
+feature flag. Secretbox must be `migration` or `required` before a token or
+WireGuard private key is stored. Only ready bindings with decryptable keys are
+injected into Xray.
 
 ## Consequences
 

@@ -3182,10 +3182,6 @@ export const SCHEMAS: Record<string, unknown> = {
   },
   "PiaStatusView": {
     "properties": {
-      "enabled": {
-        "example": false,
-        "type": "boolean"
-      },
       "encryptionMode": {
         "example": "required",
         "type": "string"
@@ -3196,7 +3192,6 @@ export const SCHEMAS: Record<string, unknown> = {
       }
     },
     "required": [
-      "enabled",
       "encryptionMode",
       "secretboxReady"
     ],

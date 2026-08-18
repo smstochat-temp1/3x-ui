@@ -3208,10 +3208,6 @@
       },
       "PiaStatusView": {
         "properties": {
-          "enabled": {
-            "example": false,
-            "type": "boolean"
-          },
           "encryptionMode": {
             "example": "required",
             "type": "string"
@@ -3222,7 +3218,6 @@
           }
         },
         "required": [
-          "enabled",
           "encryptionMode",
           "secretboxReady"
         ],
@@ -3475,7 +3470,7 @@
     },
     {
       "name": "PIA managed egress",
-      "description": "Database-managed Private Internet Access WireGuard outbounds. Disabled until XUI_PIA_ENABLED=true and node-token encryption is on. Secrets (password, token, private key) never appear in responses. Admin session or admin API token only."
+      "description": "Database-managed Private Internet Access WireGuard outbounds. Node-token encryption is required before credentials or private keys can be stored. Secrets (password, token, private key) never appear in responses. Admin session or admin API token only."
     },
     {
       "name": "Subscription Server",
@@ -13765,7 +13760,7 @@
         "tags": [
           "PIA managed egress"
         ],
-        "summary": "Report whether PIA is enabled and whether the secretbox keyring is ready.",
+        "summary": "Report whether the secretbox keyring is ready for PIA secrets.",
         "operationId": "get_panel_api_pia_status",
         "responses": {
           "200": {
@@ -13832,7 +13827,6 @@
                   "success": true,
                   "msg": "",
                   "obj": {
-                    "enabled": false,
                     "encryptionMode": "required",
                     "secretboxReady": true
                   }

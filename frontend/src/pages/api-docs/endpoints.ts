@@ -1544,12 +1544,12 @@ export const sections: readonly Section[] = [
     title: 'PIA managed egress',
     errorSchema: 'PiaErrorInfo',
     description:
-      'Database-managed Private Internet Access WireGuard outbounds. Disabled until XUI_PIA_ENABLED=true and node-token encryption is on. Secrets (password, token, private key) never appear in responses. Admin session or admin API token only.',
+      'Database-managed Private Internet Access WireGuard outbounds. Node-token encryption is required before credentials or private keys can be stored. Secrets (password, token, private key) never appear in responses. Admin session or admin API token only.',
     endpoints: [
       {
         method: 'GET',
         path: '/panel/api/pia/status',
-        summary: 'Report whether PIA is enabled and whether the secretbox keyring is ready.',
+        summary: 'Report whether the secretbox keyring is ready for PIA secrets.',
         responseSchema: 'PiaStatusView',
       },
       {

@@ -46,7 +46,6 @@ func (f *fakeRegistrar) RegisterKey(_ context.Context, server piaprotocol.WireGu
 
 func setupPIATest(t *testing.T) *Service {
 	t.Helper()
-	t.Setenv("XUI_PIA_ENABLED", "true")
 	if err := database.InitDB(filepath.Join(t.TempDir(), "x-ui.db")); err != nil {
 		t.Fatal(err)
 	}
@@ -63,6 +62,20 @@ func setupPIATest(t *testing.T) *Service {
 	return &Service{
 		Auth: fakeAuth{token: "tokentokentokentoken12"}, Catalog: fakeCatalog{payload: payload},
 		Registrar: &fakeRegistrar{}, Box: box, Now: time.Now,
+	}
+}
+
+func TestStatusReportsEncryptionReadinessWithoutFeatureGate(t *testing.T) {
+	svc := setupPIATest(t)
+	status := svc.Status()
+	if _, exists := status["enabled"]; exists {
+		t.Fatalf("PIA status must not expose a feature-gate field: %+v", status)
+	}
+	if ready, ok := status["secretboxReady"].(bool); !ok || !ready {
+		t.Fatalf("PIA status must report the configured secretbox: %+v", status)
+	}
+	if _, ok := status["encryptionMode"].(string); !ok {
+		t.Fatalf("PIA status must report the encryption mode: %+v", status)
 	}
 }
 
@@ -98,6 +111,12 @@ func TestThreeReadyBindingsHaveDistinctKeysAndTags(t *testing.T) {
 	ready, skipped, err := svc.ReadyOutbounds()
 	if err != nil || len(skipped) != 0 || len(ready) != 3 {
 		t.Fatalf("ready=%d skipped=%v err=%v", len(ready), skipped, err)
+	}
+	if tags := svc.PublicTags(); len(tags) != 3 {
+		t.Fatalf("ready PIA tags must be public without a feature gate: %v", tags)
+	}
+	if outbounds := svc.PublicOutbounds(); len(outbounds) != 3 {
+		t.Fatalf("enabled PIA outbounds must be public without a feature gate: %v", outbounds)
 	}
 	raw, _ := json.Marshal(views)
 	if strings.Contains(string(raw), "TEST-PIA-PASSWORD-MUST-NOT-LEAK") || strings.Contains(string(raw), "tokentokentokentoken12") {
@@ -248,13 +267,5 @@ func TestCiphertextAADSwapFails(t *testing.T) {
 	}
 	if _, err := svc.decryptProfileToken(svc.Box, pb); err == nil {
 		t.Fatal("AAD swap must fail")
-	}
-}
-
-func TestDisabledFlagBlocksWrites(t *testing.T) {
-	svc := setupPIATest(t)
-	t.Setenv("XUI_PIA_ENABLED", "false")
-	if _, err := svc.CreateProfile("x"); err == nil || piaprotocol.CodeOf(err) != piaprotocol.CodeDisabled {
-		t.Fatalf("want disabled, got %v", err)
 	}
 }

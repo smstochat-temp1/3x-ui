@@ -24,7 +24,6 @@ const (
 	CodeTimeout                   = "pia_timeout"
 	CodeCancelled                 = "pia_cancelled"
 	CodeNetworkUnavailable        = "pia_network_unavailable"
-	CodeDisabled                  = "pia_disabled"
 	CodeEncryptionRequired        = "pia_encryption_required"
 	CodeNotFound                  = "pia_not_found"
 	CodeTagConflict               = "pia_tag_conflict"

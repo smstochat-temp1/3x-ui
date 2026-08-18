@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -18,6 +18,7 @@ import {
 } from 'antd';
 
 import { keys } from '@/api/queryKeys';
+import { countryFlag, countryName } from '../../outbounds/outbounds-tab-helpers';
 import {
   piaDelete,
   piaGet,
@@ -59,7 +60,6 @@ export default function PiaManager({ open, onClose, onChanged }: PiaManagerProps
     },
     enabled: open,
   });
-  const enabled = Boolean(statusQuery.data?.enabled);
 
   const profilesQuery = useQuery({
     queryKey: keys.pia.profiles(),
@@ -68,7 +68,7 @@ export default function PiaManager({ open, onClose, onChanged }: PiaManagerProps
       if (!msg.success) throw new Error(msg.msg);
       return Array.isArray(msg.obj) ? msg.obj : [];
     },
-    enabled: open && enabled,
+    enabled: open,
   });
   const egressesQuery = useQuery({
     queryKey: keys.pia.egresses(),
@@ -77,7 +77,7 @@ export default function PiaManager({ open, onClose, onChanged }: PiaManagerProps
       if (!msg.success) throw new Error(msg.msg);
       return Array.isArray(msg.obj) ? msg.obj : [];
     },
-    enabled: open && enabled,
+    enabled: open,
   });
   const catalogQuery = useQuery({
     queryKey: keys.pia.catalog(),
@@ -86,7 +86,7 @@ export default function PiaManager({ open, onClose, onChanged }: PiaManagerProps
       if (!msg.success) throw new Error(msg.msg);
       return msg.obj;
     },
-    enabled: open && enabled,
+    enabled: open,
   });
 
   const status = statusQuery.data ?? null;
@@ -219,8 +219,7 @@ export default function PiaManager({ open, onClose, onChanged }: PiaManagerProps
       destroyOnHidden
     >
       <Space orientation="vertical" size="large" style={{ width: '100%' }}>
-        {status && !status.enabled && <Alert type="warning" showIcon message={t('pages.xray.pia.disabledHint')} />}
-        {status && status.enabled && !status.secretboxReady && (
+        {status && !status.secretboxReady && (
           <Alert type="error" showIcon message={t('pages.xray.pia.encryptionHint')} />
         )}
         {error && <Alert type="error" showIcon message={error} />}
@@ -228,7 +227,7 @@ export default function PiaManager({ open, onClose, onChanged }: PiaManagerProps
           <Button onClick={() => void reload()}>{t('refresh')}</Button>
           <Button onClick={() => void refreshCatalog()}>{t('pages.xray.pia.refreshCatalog')}</Button>
           <Button onClick={() => void addProfile()}>{t('pages.xray.pia.addProfile')}</Button>
-          <Button type="primary" onClick={() => setWizardOpen(true)} disabled={!status?.enabled}>
+          <Button type="primary" onClick={() => setWizardOpen(true)} disabled={!status?.secretboxReady}>
             {t('pages.xray.pia.addEgress')}
           </Button>
         </Space>
@@ -251,7 +250,7 @@ export default function PiaManager({ open, onClose, onChanged }: PiaManagerProps
             {
               title: t('pages.xray.pia.signIn'),
               render: (_: unknown, row: PiaProfile) => (
-                <Button size="small" onClick={() => setAuthProfileUid(row.uid)}>
+                <Button size="small" disabled={!status?.secretboxReady} onClick={() => setAuthProfileUid(row.uid)}>
                   {t('pages.xray.pia.signIn')}
                 </Button>
               ),
@@ -272,13 +271,13 @@ export default function PiaManager({ open, onClose, onChanged }: PiaManagerProps
               title: t('more'),
               render: (_: unknown, row: PiaEgress) => (
                 <Space wrap>
-                  <Button size="small" onClick={() => void provision(row.uid)}>
+                  <Button size="small" disabled={!status?.secretboxReady} onClick={() => void provision(row.uid)}>
                     {t('pages.xray.pia.provision')}
                   </Button>
-                  <Button size="small" onClick={() => void rotateKey(row.uid)}>
+                  <Button size="small" disabled={!status?.secretboxReady} onClick={() => void rotateKey(row.uid)}>
                     {t('pages.xray.pia.rotateKey')}
                   </Button>
-                  <Button size="small" onClick={() => void testEgress(row.uid)}>
+                  <Button size="small" disabled={!status?.secretboxReady} onClick={() => void testEgress(row.uid)}>
                     {t('pages.xray.pia.test')}
                   </Button>
                   <Button size="small" danger onClick={() => void disableOrDelete(row.uid, 'delete')}>
@@ -335,7 +334,7 @@ export default function PiaManager({ open, onClose, onChanged }: PiaManagerProps
   );
 }
 
-function EgressWizard({
+export function EgressWizard({
   open,
   profiles,
   onClose,
@@ -346,9 +345,10 @@ function EgressWizard({
   onClose: () => void;
   onCreated: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [step, setStep] = useState(0);
   const [profileUid, setProfileUid] = useState<string>();
+  const [countryCode, setCountryCode] = useState<string>();
   const [regionId, setRegionId] = useState<string>();
   const [hostname, setHostname] = useState<string>();
   const [name, setName] = useState('');
@@ -372,14 +372,33 @@ function EgressWizard({
     },
     enabled: open && Boolean(regionId),
   });
-  const regions = regionsQuery.data ?? [];
-  const servers = serversQuery.data ?? [];
+  const regions = useMemo(() => regionsQuery.data ?? [], [regionsQuery.data]);
+  const servers = useMemo(() => serversQuery.data ?? [], [serversQuery.data]);
+  const countries = useMemo(() => {
+    const codes = [...new Set(regions.map((region) => region.countryCode.trim().toUpperCase()))];
+    return codes
+      .filter((code) => /^[A-Z]{2}$/.test(code))
+      .map((code) => {
+        const name = countryName(code, i18n.resolvedLanguage || i18n.language);
+        const flag = countryFlag(code);
+        return { value: code, name, label: `${flag ? `${flag} ` : ''}${name} (${code})` };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name, i18n.resolvedLanguage || i18n.language));
+  }, [i18n.language, i18n.resolvedLanguage, regions]);
+  const filteredRegions = useMemo(
+    () => regions.filter((region) => region.countryCode.toUpperCase() === countryCode),
+    [countryCode, regions],
+  );
+  const selectedCountry = countries.find((country) => country.value === countryCode);
+  const selectedRegion = regions.find((region) => region.id === regionId);
+  const selectedServer = servers.find((server) => server.hostname === hostname);
 
   useEffect(() => {
     if (!open) return;
     setStep(0);
     setError('');
     setProfileUid(undefined);
+    setCountryCode(undefined);
     setRegionId(undefined);
     setHostname(undefined);
     setName('');
@@ -390,8 +409,19 @@ function EgressWizard({
     if (queryError) setError((queryError as Error).message);
   }, [regionsQuery.error, serversQuery.error]);
 
+  useEffect(() => {
+    if (!regionId || serversQuery.isFetching) return;
+    if (servers.length === 0) {
+      setHostname(undefined);
+      return;
+    }
+    if (!servers.some((server) => server.hostname === hostname)) {
+      setHostname(servers[0].hostname);
+    }
+  }, [hostname, regionId, servers, serversQuery.isFetching]);
+
   async function finish() {
-    if (!profileUid || !regionId) return;
+    if (!profileUid || !countryCode || !regionId || !hostname) return;
     const created = await piaPost<PiaEgress>('/panel/api/pia/egresses', {
       profileUid,
       regionId,
@@ -413,7 +443,9 @@ function EgressWizard({
 
   function canNext() {
     if (step === 0) return Boolean(profileUid);
-    if (step === 1) return Boolean(regionId);
+    if (step === 1) return Boolean(countryCode);
+    if (step === 2) return Boolean(regionId);
+    if (step === 3) return Boolean(hostname) && !serversQuery.isFetching;
     return true;
   }
 
@@ -425,6 +457,7 @@ function EgressWizard({
           size="small"
           items={[
             { title: t('pages.xray.pia.stepProfile') },
+            { title: t('pages.xray.pia.stepCountry') },
             { title: t('pages.xray.pia.stepRegion') },
             { title: t('pages.xray.pia.stepServer') },
             { title: t('pages.xray.pia.stepOptions') },
@@ -434,6 +467,7 @@ function EgressWizard({
         {error && <Alert type="error" showIcon message={error} />}
         {step === 0 && (
           <Select
+            data-testid="pia-profile-select"
             style={{ width: '100%' }}
             placeholder={t('pages.xray.pia.stepProfile')}
             value={profileUid}
@@ -443,29 +477,49 @@ function EgressWizard({
         )}
         {step === 1 && (
           <Select
+            data-testid="pia-country-select"
             style={{ width: '100%' }}
-            showSearch
+            showSearch={{ optionFilterProp: 'label' }}
+            placeholder={t('pages.xray.pia.stepCountry')}
+            value={countryCode}
+            onChange={(code) => {
+              setCountryCode(code);
+              setRegionId(undefined);
+              setHostname(undefined);
+            }}
+            options={countries}
+          />
+        )}
+        {step === 2 && (
+          <Select
+            data-testid="pia-region-select"
+            style={{ width: '100%' }}
+            showSearch={{ optionFilterProp: 'label' }}
             placeholder={t('pages.xray.pia.stepRegion')}
             value={regionId}
             onChange={(id) => {
               setRegionId(id);
               setHostname(undefined);
             }}
-            options={regions.map((r) => ({ value: r.id, label: `${r.name} (${r.id})` }))}
+            options={filteredRegions.map((region) => ({
+              value: region.id,
+              label: `${region.name} (${region.id}) · ${region.serverCount ?? 0}`,
+            }))}
           />
         )}
-        {step === 2 && (
+        {step === 3 && (
           <Select
+            data-testid="pia-server-select"
             style={{ width: '100%' }}
-            showSearch
-            allowClear
+            showSearch={{ optionFilterProp: 'label' }}
+            loading={serversQuery.isFetching}
             placeholder={t('pages.xray.pia.stepServer')}
             value={hostname}
             onChange={setHostname}
             options={servers.map((s) => ({ value: s.hostname, label: `${s.hostname} (${s.ip})` }))}
           />
         )}
-        {step === 3 && (
+        {step === 4 && (
           <Form layout="vertical">
             <Form.Item label={t('pages.xray.pia.colName')}>
               <Input value={name} onChange={(e) => setName(e.target.value)} />
@@ -476,18 +530,19 @@ function EgressWizard({
             <Alert type="warning" showIcon message={t('pages.xray.pia.ipv6Warning')} />
           </Form>
         )}
-        {step === 4 && (
+        {step === 5 && (
           <Space orientation="vertical">
             <Text>{`${t('pages.xray.pia.stepProfile')}: ${profiles.find((p) => p.uid === profileUid)?.name || ''}`}</Text>
-            <Text>{`${t('pages.xray.pia.stepRegion')}: ${regionId || ''}`}</Text>
-            <Text>{`${t('pages.xray.pia.stepServer')}: ${hostname || ''}`}</Text>
+            <Text>{`${t('pages.xray.pia.stepCountry')}: ${selectedCountry?.label || countryCode || ''}`}</Text>
+            <Text>{`${t('pages.xray.pia.stepRegion')}: ${selectedRegion ? `${selectedRegion.name} (${selectedRegion.id})` : ''}`}</Text>
+            <Text>{`${t('pages.xray.pia.stepServer')}: ${selectedServer ? `${selectedServer.hostname} (${selectedServer.ip})` : ''}`}</Text>
           </Space>
         )}
         <Space>
           <Button disabled={step === 0} onClick={() => setStep((s) => s - 1)}>
             {t('pages.xray.pia.back')}
           </Button>
-          {step < 4 ? (
+          {step < 5 ? (
             <Button type="primary" disabled={!canNext()} onClick={() => setStep((s) => s + 1)}>
               {t('pages.xray.pia.next')}
             </Button>

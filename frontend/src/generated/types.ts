@@ -730,7 +730,6 @@ export interface PiaServerView {
 }
 
 export interface PiaStatusView {
-  enabled: boolean;
   encryptionMode: string;
   secretboxReady: boolean;
 }
