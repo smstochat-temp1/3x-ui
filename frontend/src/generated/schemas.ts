@@ -2934,6 +2934,16 @@ export const SCHEMAS: Record<string, unknown> = {
             "$ref": "#/components/schemas/PiaBindingView"
           }
         ],
+        "example": {
+          "active": true,
+          "generation": 1,
+          "peerIp": "10.0.0.2/32",
+          "publicKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+          "serverHostname": "useast401",
+          "serverIp": "198.51.100.10",
+          "serverPort": 1337,
+          "uid": "b1c2d3e4"
+        },
         "nullable": true
       },
       "enabled": {
@@ -2981,6 +2991,7 @@ export const SCHEMAS: Record<string, unknown> = {
         "type": "string"
       },
       "peerIp": {
+        "example": "10.0.0.2/32",
         "type": "string"
       },
       "profileUid": {
@@ -2988,6 +2999,7 @@ export const SCHEMAS: Record<string, unknown> = {
         "type": "string"
       },
       "publicKey": {
+        "example": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
         "type": "string"
       },
       "regionId": {

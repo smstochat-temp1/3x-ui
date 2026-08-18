@@ -4,7 +4,6 @@ package nodetoken
 
 import (
 	"fmt"
-	"strings"
 	"sync"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/crypto/secretbox"
@@ -46,10 +45,7 @@ type Codec struct {
 func NewCodec(mode Mode, ring *Keyring) (*Codec, error) {
 	box, err := secretbox.NewCodec(mode, ring)
 	if err != nil {
-		if strings.Contains(err.Error(), "secretbox:") {
-			return nil, fmt.Errorf("nodetoken: %s", strings.TrimPrefix(err.Error(), "secretbox: "))
-		}
-		return nil, err
+		return nil, fmt.Errorf("nodetoken: %w", err)
 	}
 	return &Codec{box: box}, nil
 }

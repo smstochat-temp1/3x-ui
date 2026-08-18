@@ -126,13 +126,17 @@ process is left unchanged.
   then start the panel with `XUI_PIA_ENABLED=true`.
 - Rollback to a build without PIA:
 
-  1. Disable every PIA outbound (or delete them).
-  2. Remove or retarget routing, balancer, panel-egress, node-egress, and
+  1. Remove or retarget routing, balancer, panel-egress, node-egress, and
      mtproto references to `pia-*` tags.
+  2. Disable every PIA outbound (or delete them).
   3. Set `XUI_PIA_ENABLED=false` and restart.
   4. Then downgrade the panel binary.
 
   With the flag off, Nord, WARP, and outbound subscriptions are unchanged.
+
+When migrating from `XUI_NODE_TOKEN_KEY` to a keyring file, keep the same key
+bytes under the key id `env`. Existing ciphertext records embed that fixed id
+and cannot be decrypted if the file contains only differently named keys.
 
 ### Error codes
 

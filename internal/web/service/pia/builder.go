@@ -3,6 +3,8 @@ package pia
 import (
 	"encoding/json"
 	"fmt"
+	"net"
+	"strconv"
 	"strings"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/xray"
@@ -21,22 +23,26 @@ type BuildInput struct {
 	EndpointHost     string
 	EndpointPort     int
 	MTU              int
-	KeepaliveSeconds int
+	KeepaliveSeconds *int
 }
 
 func BuildWireGuardOutbound(in BuildInput) (map[string]any, []byte, error) {
-	if strings.TrimSpace(in.Tag) == "" || in.SecretKey == "" || in.PeerPublicKey == "" || in.Address == "" {
+	if strings.TrimSpace(in.Tag) == "" || in.SecretKey == "" || in.PeerPublicKey == "" || in.Address == "" ||
+		strings.TrimSpace(in.EndpointHost) == "" || in.EndpointPort < 1 || in.EndpointPort > 65535 {
 		return nil, nil, fmt.Errorf("pia: incomplete wireguard parameters")
 	}
 	mtu := in.MTU
 	if mtu <= 0 {
 		mtu = defaultMTU
 	}
-	ka := in.KeepaliveSeconds
-	if ka <= 0 {
-		ka = defaultKeepalive
+	ka := defaultKeepalive
+	if in.KeepaliveSeconds != nil {
+		ka = *in.KeepaliveSeconds
 	}
-	endpoint := fmt.Sprintf("%s:%d", in.EndpointHost, in.EndpointPort)
+	if ka < 0 || ka > 120 {
+		return nil, nil, fmt.Errorf("pia: incomplete wireguard parameters")
+	}
+	endpoint := net.JoinHostPort(in.EndpointHost, strconv.Itoa(in.EndpointPort))
 	ob := map[string]any{
 		"tag":      in.Tag,
 		"protocol": "wireguard",

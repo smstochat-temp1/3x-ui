@@ -21,13 +21,12 @@ type RegistrationClient struct {
 	MaxBody   int64
 	Timeout   time.Duration
 	UserAgent string
-	Now       func() time.Time
 }
 
 func NewRegistrationClient(caPEM []byte) *RegistrationClient {
 	return &RegistrationClient{
 		CAPEM: caPEM, Port: DefaultAddKeyPort, MaxBody: DefaultMaxResponseBody,
-		Timeout: DefaultRequestTimeout, UserAgent: DefaultUserAgent, Now: time.Now,
+		Timeout: DefaultRequestTimeout, UserAgent: DefaultUserAgent,
 	}
 }
 
@@ -38,11 +37,6 @@ func (c *RegistrationClient) RegisterKey(ctx context.Context, server WireGuardSe
 	if !validSecret([]byte(token), 16, 4096) {
 		return Registration{}, NewError(CodeTokenRejected, "The PIA authentication token is invalid.")
 	}
-	now := time.Now
-	if c.Now != nil {
-		now = c.Now
-	}
-	_ = now
 	if !validWGKey(publicKey) {
 		return Registration{}, NewError(CodeInvalidInput, "The WireGuard public key is invalid.")
 	}

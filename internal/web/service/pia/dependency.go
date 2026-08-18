@@ -2,11 +2,13 @@ package pia
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database"
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	piaprotocol "github.com/mhsanaei/3x-ui/v3/internal/pia"
+	"gorm.io/gorm"
 )
 
 type Dependency struct {
@@ -16,35 +18,44 @@ type Dependency struct {
 }
 
 func CollectDependencies(tag string) ([]Dependency, error) {
+	return collectDependencies(database.GetDB(), tag)
+}
+
+func collectDependencies(db *gorm.DB, tag string) ([]Dependency, error) {
 	if tag == "" {
 		return nil, nil
 	}
-	db := database.GetDB()
 	var deps []Dependency
 
 	var setting model.Setting
 	if err := db.Where("key = ?", "xrayTemplateConfig").First(&setting).Error; err == nil {
 		deps = append(deps, scanTemplate(setting.Value, tag)...)
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
 	}
 	var panel model.Setting
 	if err := db.Where("key = ?", "panelOutbound").First(&panel).Error; err == nil && panel.Value == tag {
 		deps = append(deps, Dependency{Kind: "panel_outbound", Label: "panel", Field: "panelOutbound"})
+	} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
 	}
 	var nodes []model.Node
-	if err := db.Where("outbound_tag = ?", tag).Find(&nodes).Error; err == nil {
-		for _, n := range nodes {
-			deps = append(deps, Dependency{Kind: "node_egress", Label: n.Name, Field: "outboundTag"})
-		}
+	if err := db.Where("outbound_tag = ?", tag).Find(&nodes).Error; err != nil {
+		return nil, err
+	}
+	for _, n := range nodes {
+		deps = append(deps, Dependency{Kind: "node_egress", Label: n.Name, Field: "outboundTag"})
 	}
 	var inbounds []model.Inbound
-	if err := db.Where("protocol = ?", model.MTProto).Find(&inbounds).Error; err == nil {
-		for _, ib := range inbounds {
-			var parsed struct {
-				OutboundTag string `json:"outboundTag"`
-			}
-			if json.Unmarshal([]byte(ib.Settings), &parsed) == nil && parsed.OutboundTag == tag {
-				deps = append(deps, Dependency{Kind: "mtproto_egress", Label: ib.Tag, Field: "outboundTag"})
-			}
+	if err := db.Where("protocol = ?", model.MTProto).Find(&inbounds).Error; err != nil {
+		return nil, err
+	}
+	for _, ib := range inbounds {
+		var parsed struct {
+			OutboundTag string `json:"outboundTag"`
+		}
+		if json.Unmarshal([]byte(ib.Settings), &parsed) == nil && parsed.OutboundTag == tag {
+			deps = append(deps, Dependency{Kind: "mtproto_egress", Label: ib.Tag, Field: "outboundTag"})
 		}
 	}
 	return deps, nil
@@ -61,18 +72,24 @@ func scanTemplate(raw, tag string) []Dependency {
 		if rules, ok := routing["rules"].([]any); ok {
 			for i, r := range rules {
 				rm, _ := r.(map[string]any)
-				if strField(rm, "outboundTag") == tag || strField(rm, "balancerTag") == tag {
-					deps = append(deps, Dependency{Kind: "routing_rule", Label: ruleLabel(rm, i), Field: "outboundTag"})
+				field := ""
+				switch {
+				case strField(rm, "outboundTag") == tag:
+					field = "outboundTag"
+				case strField(rm, "balancerTag") == tag:
+					field = "balancerTag"
+				}
+				if field != "" {
+					deps = append(deps, Dependency{Kind: "routing_rule", Label: ruleLabel(rm, i), Field: field})
 				}
 			}
 		}
 		if bals, ok := routing["balancers"].([]any); ok {
-			for i, b := range bals {
+			for _, b := range bals {
 				bm, _ := b.(map[string]any)
 				if selectorContains(bm["selector"], tag) {
 					deps = append(deps, Dependency{Kind: "balancer", Label: strField(bm, "tag"), Field: "selector"})
 				}
-				_ = i
 			}
 		}
 	}
@@ -92,42 +109,44 @@ func RewriteOrDeleteDependencies(tag, replacement string, deleteRules bool) erro
 	if replacement == "" && !deleteRules {
 		return piaprotocol.NewError(piaprotocol.CodeInvalidInput, "A replacement outbound tag or deleteRules is required.")
 	}
-	db := database.GetDB()
-	var setting model.Setting
-	if err := db.Where("key = ?", "xrayTemplateConfig").First(&setting).Error; err == nil {
-		next, changed := rewriteTemplate(setting.Value, tag, replacement, deleteRules)
-		if changed {
-			if err := db.Model(&setting).Update("value", next).Error; err != nil {
-				return err
+	return rewriteOrDeleteDependencies(database.GetDB(), tag, replacement, deleteRules)
+}
+
+func rewriteOrDeleteDependencies(db *gorm.DB, tag, replacement string, deleteRules bool) error {
+	return db.Transaction(func(tx *gorm.DB) error {
+		var setting model.Setting
+		if err := tx.Where("key = ?", "xrayTemplateConfig").First(&setting).Error; err == nil {
+			next, changed := rewriteTemplate(setting.Value, tag, replacement, deleteRules)
+			if changed {
+				if err := tx.Model(&setting).Update("value", next).Error; err != nil {
+					return err
+				}
 			}
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
 		}
-	}
-	if replacement != "" {
-		_ = db.Model(&model.Setting{}).Where("key = ? AND value = ?", "panelOutbound", tag).Update("value", replacement).Error
-		_ = db.Model(&model.Node{}).Where("outbound_tag = ?", tag).Update("outbound_tag", replacement).Error
+
+		value := replacement
+		if err := tx.Model(&model.Setting{}).Where("key = ? AND value = ?", "panelOutbound", tag).Update("value", value).Error; err != nil {
+			return err
+		}
+		if err := tx.Model(&model.Node{}).Where("outbound_tag = ?", tag).Update("outbound_tag", value).Error; err != nil {
+			return err
+		}
 		var inbounds []model.Inbound
-		if err := db.Where("protocol = ?", model.MTProto).Find(&inbounds).Error; err == nil {
-			for i := range inbounds {
-				next, ok := rewriteJSONStringField(inbounds[i].Settings, "outboundTag", tag, replacement)
-				if ok {
-					_ = db.Model(&inbounds[i]).Update("settings", next).Error
+		if err := tx.Where("protocol = ?", model.MTProto).Find(&inbounds).Error; err != nil {
+			return err
+		}
+		for i := range inbounds {
+			next, ok := rewriteJSONStringField(inbounds[i].Settings, "outboundTag", tag, value)
+			if ok {
+				if err := tx.Model(&inbounds[i]).Update("settings", next).Error; err != nil {
+					return err
 				}
 			}
 		}
-	} else if deleteRules {
-		_ = db.Model(&model.Setting{}).Where("key = ? AND value = ?", "panelOutbound", tag).Update("value", "").Error
-		_ = db.Model(&model.Node{}).Where("outbound_tag = ?", tag).Update("outbound_tag", "").Error
-		var inbounds []model.Inbound
-		if err := db.Where("protocol = ?", model.MTProto).Find(&inbounds).Error; err == nil {
-			for i := range inbounds {
-				next, ok := rewriteJSONStringField(inbounds[i].Settings, "outboundTag", tag, "")
-				if ok {
-					_ = db.Model(&inbounds[i]).Update("settings", next).Error
-				}
-			}
-		}
-	}
-	return nil
+		return nil
+	})
 }
 
 func rewriteTemplate(raw, tag, replacement string, deleteRules bool) (string, bool) {
@@ -138,6 +157,26 @@ func rewriteTemplate(raw, tag, replacement string, deleteRules bool) (string, bo
 	changed := false
 	routing, _ := cfg["routing"].(map[string]any)
 	if routing != nil {
+		removedBalancers := map[string]struct{}{}
+		if bals, ok := routing["balancers"].([]any); ok {
+			kept := make([]any, 0, len(bals))
+			for _, b := range bals {
+				bm, ok := b.(map[string]any)
+				if !ok {
+					kept = append(kept, b)
+					continue
+				}
+				if rewriteSelector(bm, "selector", tag, replacement) {
+					changed = true
+					if replacement == "" && selectorEmpty(bm["selector"]) {
+						removedBalancers[strField(bm, "tag")] = struct{}{}
+						continue
+					}
+				}
+				kept = append(kept, bm)
+			}
+			routing["balancers"] = kept
+		}
 		if rules, ok := routing["rules"].([]any); ok {
 			kept := make([]any, 0, len(rules))
 			for _, r := range rules {
@@ -158,34 +197,43 @@ func rewriteTemplate(raw, tag, replacement string, deleteRules bool) (string, bo
 						continue
 					}
 				}
-				if strField(rm, "balancerTag") == tag && replacement != "" {
-					rm["balancerTag"] = replacement
+				balancerTag := strField(rm, "balancerTag")
+				if balancerTag == tag {
+					if replacement != "" {
+						rm["balancerTag"] = replacement
+						changed = true
+					} else if deleteRules {
+						changed = true
+						continue
+					}
+				}
+				if _, removed := removedBalancers[balancerTag]; removed {
 					changed = true
+					continue
 				}
 				kept = append(kept, rm)
 			}
 			routing["rules"] = kept
 		}
-		if bals, ok := routing["balancers"].([]any); ok {
-			for _, b := range bals {
-				bm, _ := b.(map[string]any)
-				if rewriteSelector(bm, "selector", tag, replacement) {
-					changed = true
-				}
+	}
+	for _, key := range []string{"observatory", "burstObservatory"} {
+		if obs, ok := cfg[key].(map[string]any); ok && rewriteSelector(obs, "subjectSelector", tag, replacement) {
+			changed = true
+			if replacement == "" && selectorEmpty(obs["subjectSelector"]) {
+				delete(cfg, key)
 			}
 		}
-	}
-	if obs, ok := cfg["observatory"].(map[string]any); ok && rewriteSelector(obs, "subjectSelector", tag, replacement) {
-		changed = true
-	}
-	if obs, ok := cfg["burstObservatory"].(map[string]any); ok && rewriteSelector(obs, "subjectSelector", tag, replacement) {
-		changed = true
 	}
 	out, err := json.Marshal(cfg)
 	if err != nil {
 		return raw, false
 	}
 	return string(out), changed
+}
+
+func selectorEmpty(value any) bool {
+	selector, ok := value.([]any)
+	return ok && len(selector) == 0
 }
 
 func rewriteSelector(m map[string]any, field, tag, replacement string) bool {

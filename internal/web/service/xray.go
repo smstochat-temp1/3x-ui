@@ -13,6 +13,7 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/config"
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/logger"
+	piaprotocol "github.com/mhsanaei/3x-ui/v3/internal/pia"
 	"github.com/mhsanaei/3x-ui/v3/internal/util/json_util"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service/managedoutbound"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service/pia"
@@ -714,35 +715,58 @@ func mergeManagedOutboundSources(s *XrayService, cfg *xray.Config) error {
 		if err != nil {
 			return err
 		}
-		if err := appendGeneratedOutbounds(cfg, ready); err != nil {
+		duplicates, err := appendGeneratedOutbounds(cfg, ready)
+		if err != nil {
 			return err
 		}
+		skipped = append(skipped, duplicates...)
 		for _, tag := range skipped {
 			if pia.ConfigReferencesTag(cfg.RouterConfig, extra, tag) {
-				return fmt.Errorf("pia outbound %s is not ready but is still referenced", tag)
+				return piaprotocol.NewError(piaprotocol.CodeApplyBlocked, fmt.Sprintf("PIA outbound %s is referenced but not ready.", tag))
 			}
 		}
 	}
 	return nil
 }
 
-func appendGeneratedOutbounds(cfg *xray.Config, extras []any) error {
+func appendGeneratedOutbounds(cfg *xray.Config, extras []any) ([]string, error) {
 	if len(extras) == 0 {
-		return nil
+		return nil, nil
 	}
 	var current []any
 	if len(cfg.OutboundConfigs) > 0 {
 		if err := json.Unmarshal(cfg.OutboundConfigs, &current); err != nil {
-			return err
+			return nil, err
 		}
 	}
-	current = append(current, extras...)
+	seen := make(map[string]struct{}, len(current)+len(extras))
+	for _, outbound := range current {
+		if entry, ok := outbound.(map[string]any); ok {
+			if tag, _ := entry["tag"].(string); tag != "" {
+				seen[tag] = struct{}{}
+			}
+		}
+	}
+	var duplicates []string
+	for _, outbound := range extras {
+		if entry, ok := outbound.(map[string]any); ok {
+			if tag, _ := entry["tag"].(string); tag != "" {
+				if _, exists := seen[tag]; exists {
+					logger.Warningf("managed outbound tag %s collides with an existing outbound; generated outbound skipped", tag)
+					duplicates = append(duplicates, tag)
+					continue
+				}
+				seen[tag] = struct{}{}
+			}
+		}
+		current = append(current, outbound)
+	}
 	combined, err := json.MarshalIndent(current, "", "  ")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	cfg.OutboundConfigs = json_util.RawMessage(combined)
-	return nil
+	return duplicates, nil
 }
 
 func (s *XrayService) piaReferenceTags() []string {
@@ -752,20 +776,22 @@ func (s *XrayService) piaReferenceTags() []string {
 	}
 	if nodes, err := s.nodeService.GetAll(); err == nil {
 		for _, n := range nodes {
-			if n.OutboundTag != "" {
+			if n.Enable && n.OutboundTag != "" {
 				extra = append(extra, n.OutboundTag)
 			}
 		}
 	}
 	if inbounds, err := s.inboundService.GetAllInbounds(); err == nil {
 		for _, ib := range inbounds {
-			if ib.Protocol != model.MTProto {
+			if ib.Protocol != model.MTProto || !ib.Enable || ib.NodeID != nil || ib.Tag == "" {
 				continue
 			}
 			var parsed struct {
-				OutboundTag string `json:"outboundTag"`
+				RouteThroughXray bool   `json:"routeThroughXray"`
+				RouteXrayPort    int    `json:"routeXrayPort"`
+				OutboundTag      string `json:"outboundTag"`
 			}
-			if json.Unmarshal([]byte(ib.Settings), &parsed) == nil && parsed.OutboundTag != "" {
+			if json.Unmarshal([]byte(ib.Settings), &parsed) == nil && parsed.RouteThroughXray && parsed.RouteXrayPort > 0 && parsed.OutboundTag != "" {
 				extra = append(extra, parsed.OutboundTag)
 			}
 		}
@@ -1160,6 +1186,7 @@ func (s *XrayService) RestartXray(isForce bool) error {
 		}
 		if !isForce && !configUnchanged && s.tryHotApply(process, xrayConfig) {
 			logger.Info("Xray config changes applied through the core API, no restart needed")
+			s.markPIAOutboundsApplied()
 			return nil
 		}
 		_ = process.Stop()
@@ -1172,8 +1199,15 @@ func (s *XrayService) RestartXray(isForce bool) error {
 	if err != nil {
 		return err
 	}
+	s.markPIAOutboundsApplied()
 
 	return nil
+}
+
+func (s *XrayService) markPIAOutboundsApplied() {
+	if err := pia.Default().MarkReadyOutboundsApplied(); err != nil {
+		logger.Warning("failed to record applied PIA outbounds:", err)
+	}
 }
 
 // tryHotApply attempts to reconcile the running Xray instance with newCfg

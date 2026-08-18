@@ -2,6 +2,7 @@ package pia
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/util/wireguard"
@@ -16,10 +17,11 @@ func TestBuildWireGuardOutboundGolden(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	keepalive := 25
 	ob, raw, err := BuildWireGuardOutbound(BuildInput{
 		Tag: "pia-abcd1234", SecretKey: priv, Address: "10.7.0.2/32",
 		PeerPublicKey: peer, EndpointHost: "198.51.100.10", EndpointPort: 1337,
-		MTU: 1420, KeepaliveSeconds: 25,
+		MTU: 1420, KeepaliveSeconds: &keepalive,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -49,6 +51,45 @@ func TestBuildWireGuardOutboundGolden(t *testing.T) {
 	}
 }
 
+func TestBuildWireGuardOutboundPreservesZeroKeepaliveAndFormatsIPv6(t *testing.T) {
+	priv, _, err := wireguard.GenerateWireguardKeypair()
+	if err != nil {
+		t.Fatal(err)
+	}
+	peer, _, err := wireguard.GenerateWireguardKeypair()
+	if err != nil {
+		t.Fatal(err)
+	}
+	zero := 0
+	_, raw, err := BuildWireGuardOutbound(BuildInput{
+		Tag: "pia-abcd1234", SecretKey: priv, Address: "10.7.0.2/32",
+		PeerPublicKey: peer, EndpointHost: "2001:db8::1", EndpointPort: 1337,
+		MTU: 1420, KeepaliveSeconds: &zero,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(raw), `"endpoint":"[2001:db8::1]:1337"`) || !strings.Contains(string(raw), `"keepAlive":0`) {
+		t.Fatalf("unexpected WireGuard output: %s", raw)
+	}
+}
+
+func TestBuildWireGuardOutboundRejectsMissingEndpoint(t *testing.T) {
+	priv, _, err := wireguard.GenerateWireguardKeypair()
+	if err != nil {
+		t.Fatal(err)
+	}
+	peer, _, err := wireguard.GenerateWireguardKeypair()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := BuildWireGuardOutbound(BuildInput{
+		Tag: "pia-abcd1234", SecretKey: priv, Address: "10.7.0.2/32", PeerPublicKey: peer,
+	}); err == nil {
+		t.Fatal("expected incomplete endpoint error")
+	}
+}
+
 func TestPublicOutboundViewOmitsSecrets(t *testing.T) {
 	v := PublicOutboundView("uid-1", "pia-x", "US East", "host", "ready")
 	raw, _ := json.Marshal(v)
@@ -58,14 +99,32 @@ func TestPublicOutboundViewOmitsSecrets(t *testing.T) {
 }
 
 func jsonContainsSecret(s string, keys ...string) bool {
-	var m map[string]any
-	if json.Unmarshal([]byte(s), &m) != nil {
+	var value any
+	if json.Unmarshal([]byte(s), &value) != nil {
 		return false
 	}
-	for _, k := range keys {
-		if _, ok := m[k]; ok {
-			return true
+	var walk func(any) bool
+	walk = func(node any) bool {
+		switch typed := node.(type) {
+		case map[string]any:
+			for key, child := range typed {
+				for _, secret := range keys {
+					if strings.EqualFold(key, secret) {
+						return true
+					}
+				}
+				if walk(child) {
+					return true
+				}
+			}
+		case []any:
+			for _, child := range typed {
+				if walk(child) {
+					return true
+				}
+			}
 		}
+		return false
 	}
-	return false
+	return walk(value)
 }

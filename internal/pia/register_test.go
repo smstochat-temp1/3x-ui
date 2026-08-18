@@ -191,6 +191,9 @@ func TestRegistrationResponseGuardsAndRedirect(t *testing.T) {
 				token,
 				testPubKey(),
 			)
+			if err == nil {
+				t.Fatal("expected registration error")
+			}
 			if CodeOf(err) != test.wantCode {
 				t.Fatalf("got %s, want %s: %v", CodeOf(err), test.wantCode, err)
 			}

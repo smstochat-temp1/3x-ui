@@ -145,7 +145,7 @@ func (a *PIAController) createEgress(c *gin.Context) {
 		RegionID         string `json:"regionId"`
 		ServerHostname   string `json:"serverHostname"`
 		MTU              int    `json:"mtu"`
-		KeepaliveSeconds int    `json:"keepaliveSeconds"`
+		KeepaliveSeconds *int   `json:"keepaliveSeconds"`
 		IPv6Policy       string `json:"ipv6Policy"`
 	}
 	if err := bindPIAJSON(c, &body); err != nil {
@@ -169,7 +169,7 @@ func (a *PIAController) patchEgress(c *gin.Context) {
 	var body struct {
 		Name             string `json:"name"`
 		MTU              int    `json:"mtu"`
-		KeepaliveSeconds int    `json:"keepaliveSeconds"`
+		KeepaliveSeconds *int   `json:"keepaliveSeconds"`
 		IPv6Policy       string `json:"ipv6Policy"`
 	}
 	if err := bindPIAJSON(c, &body); err != nil {
@@ -185,7 +185,10 @@ func (a *PIAController) deleteEgress(c *gin.Context) {
 		ReplacementTag string `json:"replacementTag"`
 		DeleteRules    bool   `json:"deleteRules"`
 	}
-	_ = bindPIAJSON(c, &body)
+	if err := bindPIAJSON(c, &body); err != nil {
+		a.respond(c, nil, piaprotocol.NewError(piaprotocol.CodeInvalidInput, "Invalid JSON body."))
+		return
+	}
 	if body.ReplacementTag == "" {
 		body.ReplacementTag = c.Query("replacementTag")
 	}
@@ -215,7 +218,10 @@ func (a *PIAController) testEgress(c *gin.Context) {
 		TestURL string `json:"testUrl"`
 		Mode    string `json:"mode"`
 	}
-	_ = bindPIAJSON(c, &body)
+	if err := bindPIAJSON(c, &body); err != nil {
+		a.respond(c, nil, piaprotocol.NewError(piaprotocol.CodeInvalidInput, "Invalid JSON body."))
+		return
+	}
 	row, err := a.svc.TestByTag(c.Request.Context(), c.Param("uid"), body.TestURL, body.Mode)
 	a.respond(c, row, err)
 }
@@ -230,7 +236,10 @@ func (a *PIAController) disableEgress(c *gin.Context) {
 		ReplacementTag string `json:"replacementTag"`
 		DeleteRules    bool   `json:"deleteRules"`
 	}
-	_ = bindPIAJSON(c, &body)
+	if err := bindPIAJSON(c, &body); err != nil {
+		a.respond(c, nil, piaprotocol.NewError(piaprotocol.CodeInvalidInput, "Invalid JSON body."))
+		return
+	}
 	row, err := a.svc.SetEnabled(c.Param("uid"), false, body.ReplacementTag, body.DeleteRules)
 	a.respond(c, row, err)
 }

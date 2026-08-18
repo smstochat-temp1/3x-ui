@@ -27,6 +27,30 @@ func TestBindPIAJSONRejectsOversizedBody(t *testing.T) {
 	}
 }
 
+func TestPIAMutationHandlersRejectMalformedJSON(t *testing.T) {
+	t.Setenv("XUI_PIA_ENABLED", "true")
+	gin.SetMode(gin.TestMode)
+	engine := gin.New()
+	NewPIAController(engine.Group("/panel/api/pia"))
+	for _, test := range []struct {
+		method string
+		path   string
+	}{
+		{method: http.MethodDelete, path: "/panel/api/pia/egresses/missing"},
+		{method: http.MethodPost, path: "/panel/api/pia/egresses/missing/test"},
+		{method: http.MethodPost, path: "/panel/api/pia/egresses/missing/disable"},
+	} {
+		t.Run(test.method+" "+test.path, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			req := httptest.NewRequest(test.method, test.path, strings.NewReader(`{"broken":`))
+			engine.ServeHTTP(w, req)
+			if !strings.Contains(w.Body.String(), `"code":"pia_invalid_input"`) {
+				t.Fatalf("malformed body was not rejected: %s", w.Body.String())
+			}
+		})
+	}
+}
+
 func TestPIAControllerOmitsCiphertext(t *testing.T) {
 	t.Setenv("XUI_PIA_ENABLED", "true")
 	gin.SetMode(gin.TestMode)

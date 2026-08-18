@@ -52,6 +52,39 @@ func TestRoundTripAndAAD(t *testing.T) {
 	}
 }
 
+func TestDecryptRejectsMalformedCiphertext(t *testing.T) {
+	c, err := NewCodec(ModeRequired, testRing(t, "k1", "k1"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ref := SecretRef{Namespace: "n", RecordID: "1", Field: "t"}
+	enc, err := c.Encrypt(ref, []byte("tok"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	parts := strings.Split(enc, ":")
+	blob, err := base64.RawURLEncoding.DecodeString(parts[3])
+	if err != nil {
+		t.Fatal(err)
+	}
+	blob[len(blob)-1] ^= 1
+	tampered := strings.Join([]string{parts[0], parts[1], parts[2], base64.RawURLEncoding.EncodeToString(blob)}, ":")
+	cases := map[string]string{
+		"unknown key id":     "enc:v1:zz:" + strings.TrimPrefix(enc, "enc:v1:k1:"),
+		"unsupported scheme": "enc:v9:k1:AAAA",
+		"missing key id":     "enc:v1:AAAA",
+		"truncated blob":     "enc:v1:k1:AAAA",
+		"tampered body":      tampered,
+	}
+	for name, ciphertext := range cases {
+		t.Run(name, func(t *testing.T) {
+			if _, err := c.Decrypt(ref, ciphertext); err == nil {
+				t.Fatal("expected decryption error")
+			}
+		})
+	}
+}
+
 func TestRefusePlaintextModeOff(t *testing.T) {
 	c, _ := NewCodec(ModeOff, nil)
 	if _, err := c.Encrypt(SecretRef{Namespace: "pia/x", RecordID: "1", Field: "t"}, []byte("tok")); err == nil {

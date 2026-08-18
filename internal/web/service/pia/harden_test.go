@@ -43,7 +43,7 @@ func TestMissingKeyringSkipsReadyOutbounds(t *testing.T) {
 	}
 }
 
-func TestLogsDoNotContainPassword(t *testing.T) {
+func TestProfileViewDoesNotContainPassword(t *testing.T) {
 	svc := setupPIATest(t)
 	secret := "TEST-PIA-PASSWORD-MUST-NOT-LEAK"
 	profile, _ := svc.CreateProfile("acct")
@@ -115,12 +115,15 @@ func TestConcurrentRotateAndDelete(t *testing.T) {
 	}()
 	<-done
 	<-done
-	if rotateErr != nil && deleteErr != nil {
-		t.Fatalf("rotate=%v delete=%v", rotateErr, deleteErr)
+	if deleteErr != nil {
+		t.Fatalf("delete failed: %v", deleteErr)
+	}
+	if rotateErr != nil && piaprotocol.CodeOf(rotateErr) != piaprotocol.CodeNotFound {
+		t.Fatalf("unexpected rotate error: %v", rotateErr)
 	}
 }
 
-func TestApplyBlockedWhenSkippedTagReferenced(t *testing.T) {
+func TestConfigReferencesManagedOutboundTag(t *testing.T) {
 	routing := []byte(`{"rules":[{"outboundTag":"pia-deadbeef"}]}`)
 	if !ConfigReferencesTag(routing, nil, "pia-deadbeef") {
 		t.Fatal("expected reference")
@@ -128,5 +131,4 @@ func TestApplyBlockedWhenSkippedTagReferenced(t *testing.T) {
 	if ConfigReferencesTag(routing, nil, "pia-other") {
 		t.Fatal("unexpected reference")
 	}
-	_ = piaprotocol.CodeApplyBlocked
 }

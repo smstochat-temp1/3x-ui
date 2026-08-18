@@ -52,6 +52,7 @@ export interface Section {
   title: string;
   description?: string;
   subHeader?: SubscriptionHeader[];
+  errorSchema?: string;
   endpoints: Endpoint[];
 }
 
@@ -1541,6 +1542,7 @@ export const sections: readonly Section[] = [
   {
     id: 'pia',
     title: 'PIA managed egress',
+    errorSchema: 'PiaErrorInfo',
     description:
       'Database-managed Private Internet Access WireGuard outbounds. Disabled until XUI_PIA_ENABLED=true and node-token encryption is on. Secrets (password, token, private key) never appear in responses. Admin session or admin API token only.',
     endpoints: [
@@ -1719,6 +1721,7 @@ export const sections: readonly Section[] = [
           { name: 'deleteRules', in: 'body (json)', type: 'boolean', optional: true },
         ],
         responseSchema: 'PiaEgressView',
+        response: '{\n  "success": true,\n  "obj": { "enabled": false, "status": "disabled" }\n}',
       },
       {
         method: 'GET',

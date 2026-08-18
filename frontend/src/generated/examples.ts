@@ -697,7 +697,16 @@ export const EXAMPLES: Record<string, unknown> = {
     "label": "rule 3"
   },
   "PiaEgressView": {
-    "binding": null,
+    "binding": {
+      "active": true,
+      "generation": 1,
+      "peerIp": "10.0.0.2/32",
+      "publicKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+      "serverHostname": "useast401",
+      "serverIp": "198.51.100.10",
+      "serverPort": 1337,
+      "uid": "b1c2d3e4"
+    },
     "enabled": true,
     "generation": 1,
     "hasActiveBinding": true,
@@ -710,9 +719,9 @@ export const EXAMPLES: Record<string, unknown> = {
     "mtu": 1420,
     "name": "US East",
     "outboundTag": "pia-a1b2c3d4",
-    "peerIp": "",
+    "peerIp": "10.0.0.2/32",
     "profileUid": "a1b2c3d4e5f6",
-    "publicKey": "",
+    "publicKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
     "regionId": "us-east",
     "regionName": "US East",
     "serverHostname": "useast401",

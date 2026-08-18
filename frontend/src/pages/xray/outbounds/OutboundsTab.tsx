@@ -194,7 +194,10 @@ export default function OutboundsTab({
   function openAdd() {
     setEditingOutbound(null);
     setEditingIndex(null);
-    setExistingTags((templateSettings?.outbounds || []).map((o) => o?.tag).filter((tg): tg is string => !!tg));
+    setExistingTags([
+      ...(templateSettings?.outbounds || []).map((o) => o?.tag),
+      ...(piaOutboundTags ?? []),
+    ].filter((tg): tg is string => !!tg));
     setModalOpen(true);
   }
 
@@ -207,9 +210,12 @@ export default function OutboundsTab({
     setEditingOutbound((templateSettings?.outbounds || [])[target] as Record<string, unknown>);
     setEditingIndex(target);
     setExistingTags(
-      (templateSettings?.outbounds || [])
-        .filter((_, i) => i !== target)
-        .map((o) => o?.tag)
+      [
+        ...(templateSettings?.outbounds || [])
+          .filter((_, i) => i !== target)
+          .map((o) => o?.tag),
+        ...(piaOutboundTags ?? []),
+      ]
         .filter((tg): tg is string => !!tg),
     );
     setModalOpen(true);

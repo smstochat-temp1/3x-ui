@@ -5,12 +5,14 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"net/netip"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/config"
 	"github.com/mhsanaei/3x-ui/v3/internal/crypto/secretbox"
@@ -250,12 +252,30 @@ func (s *Service) DeleteProfile(uid string) error {
 	if err := database.GetDB().Where("profile_id = ?", row.Id).Find(&egresses).Error; err != nil {
 		return err
 	}
-	for _, e := range egresses {
-		if err := s.DeleteEgress(e.UID, "", false); err != nil {
+	for i := range egresses {
+		deps, err := CollectDependencies(egresses[i].OutboundTag)
+		if err != nil {
 			return err
 		}
+		if len(deps) > 0 {
+			return &ConflictError{Err: piaprotocol.NewError(piaprotocol.CodeDependencyConflict, "This PIA outbound is still referenced."), Deps: deps}
+		}
 	}
-	return database.GetDB().Delete(row).Error
+	return database.GetDB().Transaction(func(tx *gorm.DB) error {
+		if len(egresses) > 0 {
+			egressIDs := make([]int, 0, len(egresses))
+			for i := range egresses {
+				egressIDs = append(egressIDs, egresses[i].Id)
+			}
+			if err := tx.Where("egress_id IN ?", egressIDs).Delete(&model.PiaBinding{}).Error; err != nil {
+				return err
+			}
+			if err := tx.Delete(&egresses).Error; err != nil {
+				return err
+			}
+		}
+		return tx.Delete(row).Error
+	})
 }
 
 func (s *Service) Authenticate(ctx context.Context, uid, username string, password []byte) (*ProfileView, error) {
@@ -371,7 +391,7 @@ type CreateEgressInput struct {
 	RegionID         string
 	ServerHostname   string
 	MTU              int
-	KeepaliveSeconds int
+	KeepaliveSeconds *int
 	IPv6Policy       string
 }
 
@@ -414,9 +434,19 @@ func (s *Service) CreateEgress(ctx context.Context, in CreateEgressInput) (*Egre
 	if profile.AuthStatus != model.PiaAuthValid || profile.TokenCiphertext == "" {
 		row.Status = model.PiaEgressNeedsAuth
 	}
-	if err := database.GetDB().Create(row).Error; err != nil {
+	db := database.GetDB()
+	if err := db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(row).Error; err != nil {
+			return err
+		}
+		if in.KeepaliveSeconds != nil && ka == 0 {
+			return tx.Model(row).UpdateColumn("keepalive_seconds", 0).Error
+		}
+		return nil
+	}); err != nil {
 		return nil, err
 	}
+	row.KeepaliveSeconds = ka
 	return s.egressView(row)
 }
 
@@ -450,7 +480,7 @@ func (s *Service) GetEgress(uid string) (*EgressView, error) {
 	return s.egressView(row)
 }
 
-func (s *Service) PatchEgress(uid, name string, mtu, keepalive int, ipv6 string) (*EgressView, error) {
+func (s *Service) PatchEgress(uid, name string, mtu int, keepalive *int, ipv6 string) (*EgressView, error) {
 	if err := s.requireEnabled(); err != nil {
 		return nil, err
 	}
@@ -461,7 +491,10 @@ func (s *Service) PatchEgress(uid, name string, mtu, keepalive int, ipv6 string)
 	if name = strings.TrimSpace(name); name != "" {
 		row.Name = name
 	}
-	nextMTU, nextKA, nextIPv6, err := normalizeTunnelOpts(firstPositive(mtu, row.MTU), firstPositive(keepalive, row.KeepaliveSeconds), firstNonEmpty(ipv6, row.IPv6Policy))
+	if keepalive == nil {
+		keepalive = &row.KeepaliveSeconds
+	}
+	nextMTU, nextKA, nextIPv6, err := normalizeTunnelOpts(firstPositive(mtu, row.MTU), keepalive, firstNonEmpty(ipv6, row.IPv6Policy))
 	if err != nil {
 		return nil, err
 	}
@@ -540,18 +573,18 @@ func (s *Service) SetEnabled(uid string, enabled bool, replacement string, delet
 }
 
 func (s *Service) Provision(ctx context.Context, uid string) (*EgressView, error) {
-	return s.provision(ctx, uid, false)
+	return s.provision(ctx, uid)
 }
 
 func (s *Service) RotateKey(ctx context.Context, uid string) (*EgressView, error) {
-	return s.provision(ctx, uid, true)
+	return s.provision(ctx, uid)
 }
 
 func (s *Service) Reprovision(ctx context.Context, uid string) (*EgressView, error) {
-	return s.provision(ctx, uid, true)
+	return s.provision(ctx, uid)
 }
 
-func (s *Service) provision(ctx context.Context, uid string, rotate bool) (*EgressView, error) {
+func (s *Service) provision(ctx context.Context, uid string) (*EgressView, error) {
 	if err := s.requireEnabled(); err != nil {
 		return nil, err
 	}
@@ -559,12 +592,12 @@ func (s *Service) provision(ctx context.Context, uid string, rotate bool) (*Egre
 	if err != nil {
 		return nil, err
 	}
+	unlock := s.lockKey(&s.egressMu, uid)
+	defer unlock()
 	row, err := s.egressByUID(uid)
 	if err != nil {
 		return nil, err
 	}
-	unlock := s.lockKey(&s.egressMu, uid)
-	defer unlock()
 	profile, err := s.profileByID(row.ProfileID)
 	if err != nil {
 		return nil, err
@@ -607,18 +640,17 @@ func (s *Service) provision(ctx context.Context, uid string, rotate bool) (*Egre
 	}
 	dns, _ := json.Marshal(addrsToStrings(reg.DNSServers))
 	gen := 1
-	if rotate {
-		if cur, _ := s.activeBinding(row.Id); cur != nil {
-			gen = cur.Generation + 1
-			cur.Active = false
-			cur.ActiveSlot = nil
-			_ = database.GetDB().Save(cur).Error
-		}
-	} else if cur, _ := s.activeBinding(row.Id); cur != nil {
+	cur, err := s.activeBinding(row.Id)
+	if err != nil {
+		return nil, err
+	}
+	if cur != nil {
+		gen = cur.Generation + 1
 		cur.Active = false
 		cur.ActiveSlot = nil
-		_ = database.GetDB().Save(cur).Error
-		gen = cur.Generation + 1
+		if err := database.GetDB().Save(cur).Error; err != nil {
+			return nil, err
+		}
 	}
 	slot := model.PiaBindingActiveSlot
 	binding := &model.PiaBinding{
@@ -654,6 +686,8 @@ func (s *Service) TestByTag(ctx context.Context, uid, testURL, mode string) (*ou
 	if err != nil {
 		return nil, err
 	}
+	unlock := s.lockKey(&s.egressMu, uid)
+	defer unlock()
 	row, err := s.egressByUID(uid)
 	if err != nil {
 		return nil, err
@@ -674,13 +708,13 @@ func (s *Service) TestByTag(ctx context.Context, uid, testURL, mode string) (*ou
 	_, raw, err := BuildWireGuardOutbound(BuildInput{
 		Tag: row.OutboundTag, SecretKey: string(priv), Address: binding.PeerIP,
 		PeerPublicKey: binding.ServerPublicKey, EndpointHost: binding.ServerIP, EndpointPort: binding.ServerPort,
-		MTU: row.MTU, KeepaliveSeconds: row.KeepaliveSeconds,
+		MTU: row.MTU, KeepaliveSeconds: &row.KeepaliveSeconds,
 	})
 	if err != nil {
 		return nil, err
 	}
 	s.testLast.Store(uid, s.now())
-	result, err := (&outbound.OutboundService{}).TestOutbound(string(raw), testURL, "", mode)
+	result, err := (&outbound.OutboundService{}).TestOutboundContext(ctx, string(raw), testURL, "", mode)
 	if err != nil {
 		return nil, err
 	}
@@ -699,7 +733,6 @@ func (s *Service) TestByTag(ctx context.Context, uid, testURL, mode string) (*ou
 		}
 	}
 	_ = database.GetDB().Save(binding).Error
-	_ = ctx
 	return result, nil
 }
 
@@ -758,17 +791,23 @@ func (s *Service) ReadyOutbounds() ([]any, []string, error) {
 	if !config.IsPIAEnabled() {
 		return nil, nil, nil
 	}
-	box := s.box()
 	var rows []model.PiaEgress
 	if err := database.GetDB().Where("enabled = ? AND status = ?", true, model.PiaEgressReady).Find(&rows).Error; err != nil {
 		return nil, nil, err
 	}
 	var ready []any
 	var skipped []string
+	box := s.box()
+	if box == nil || !box.Enabled() {
+		for i := range rows {
+			skipped = append(skipped, rows[i].OutboundTag)
+		}
+		return ready, skipped, nil
+	}
 	for i := range rows {
 		row := &rows[i]
 		b, err := s.activeBinding(row.Id)
-		if err != nil || b == nil || box == nil || !box.Enabled() {
+		if err != nil || b == nil {
 			skipped = append(skipped, row.OutboundTag)
 			continue
 		}
@@ -781,7 +820,7 @@ func (s *Service) ReadyOutbounds() ([]any, []string, error) {
 		ob, _, err := BuildWireGuardOutbound(BuildInput{
 			Tag: row.OutboundTag, SecretKey: string(priv), Address: b.PeerIP,
 			PeerPublicKey: b.ServerPublicKey, EndpointHost: b.ServerIP, EndpointPort: b.ServerPort,
-			MTU: row.MTU, KeepaliveSeconds: row.KeepaliveSeconds,
+			MTU: row.MTU, KeepaliveSeconds: &row.KeepaliveSeconds,
 		})
 		if err != nil {
 			skipped = append(skipped, row.OutboundTag)
@@ -789,10 +828,23 @@ func (s *Service) ReadyOutbounds() ([]any, []string, error) {
 			continue
 		}
 		ready = append(ready, ob)
-		b.LastAppliedAt = s.now().Unix()
-		_ = database.GetDB().Save(b).Error
 	}
 	return ready, skipped, nil
+}
+
+func (s *Service) MarkReadyOutboundsApplied() error {
+	if !config.IsPIAEnabled() {
+		return nil
+	}
+	var egressIDs []int
+	if err := database.GetDB().Model(&model.PiaEgress{}).
+		Where("enabled = ? AND status = ?", true, model.PiaEgressReady).
+		Pluck("id", &egressIDs).Error; err != nil || len(egressIDs) == 0 {
+		return err
+	}
+	return database.GetDB().Model(&model.PiaBinding{}).
+		Where("egress_id IN ? AND active = ?", egressIDs, true).
+		Update("last_applied_at", s.now().Unix()).Error
 }
 
 func (s *Service) PublicOutbounds() []map[string]any {
@@ -881,6 +933,9 @@ func (s *Service) egressByUID(uid string) (*model.PiaEgress, error) {
 func (s *Service) activeBinding(egressID int) (*model.PiaBinding, error) {
 	var row model.PiaBinding
 	err := database.GetDB().Where("egress_id = ? AND scope_key = ? AND active = ?", egressID, model.PiaScopeLocal, true).First(&row).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -1044,9 +1099,9 @@ func (s *Service) allocateTag(uid string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	base := uid
+	base := strings.ReplaceAll(uid, "-", "")
 	if len(base) > 8 {
-		base = strings.ReplaceAll(base, "-", "")[:8]
+		base = base[:8]
 	}
 	tag := "pia-" + base
 	if _, used := occupied[tag]; !used {
@@ -1130,17 +1185,18 @@ func accountHint(username string) string {
 	return u[:2] + strings.Repeat("*", len(u)-4) + u[len(u)-2:]
 }
 
-func normalizeTunnelOpts(mtu, keepalive int, ipv6 string) (int, int, string, error) {
+func normalizeTunnelOpts(mtu int, keepalive *int, ipv6 string) (int, int, string, error) {
 	if mtu == 0 {
 		mtu = defaultMTU
 	}
 	if mtu < 1280 || mtu > 1500 {
 		return 0, 0, "", piaprotocol.NewError(piaprotocol.CodeInvalidInput, "MTU must be between 1280 and 1500.")
 	}
-	if keepalive == 0 {
-		keepalive = defaultKeepalive
+	ka := defaultKeepalive
+	if keepalive != nil {
+		ka = *keepalive
 	}
-	if keepalive < 0 || keepalive > 120 {
+	if ka < 0 || ka > 120 {
 		return 0, 0, "", piaprotocol.NewError(piaprotocol.CodeInvalidInput, "Keepalive must be between 0 and 120 seconds.")
 	}
 	switch ipv6 {
@@ -1150,7 +1206,7 @@ func normalizeTunnelOpts(mtu, keepalive int, ipv6 string) (int, int, string, err
 	default:
 		return 0, 0, "", piaprotocol.NewError(piaprotocol.CodeInvalidInput, "Unsupported IPv6 policy.")
 	}
-	return mtu, keepalive, ipv6, nil
+	return mtu, ka, ipv6, nil
 }
 
 func firstPositive(v, fallback int) int {

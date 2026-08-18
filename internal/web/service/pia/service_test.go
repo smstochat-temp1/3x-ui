@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/netip"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -35,16 +36,12 @@ func (f *fakeRegistrar) RegisterKey(_ context.Context, server piaprotocol.WireGu
 	key := make([]byte, 32)
 	key[0] = byte(f.n)
 	return piaprotocol.Registration{
-		PeerIP:     netip.MustParsePrefix("10.8.0." + itoaOctet(f.n) + "/32"),
+		PeerIP:     netip.MustParsePrefix("10.8.0." + strconv.Itoa(f.n) + "/32"),
 		ServerKey:  base64.StdEncoding.EncodeToString(key),
 		ServerIP:   server.IP,
 		ServerPort: 1337,
 		DNSServers: []netip.Addr{netip.MustParseAddr("10.0.0.243")},
 	}, nil
-}
-
-func itoaOctet(n int) string {
-	return []string{"1", "2", "3", "4", "5", "6", "7", "8", "9"}[n-1]
 }
 
 func setupPIATest(t *testing.T) *Service {
@@ -82,7 +79,7 @@ func TestThreeReadyBindingsHaveDistinctKeysAndTags(t *testing.T) {
 	hosts := []string{"useast1", "useast2", "useast3"}
 	views := make([]*EgressView, 0, 3)
 	for i, host := range hosts {
-		e, err := svc.CreateEgress(ctx, CreateEgressInput{ProfileUID: profile.UID, Name: "e" + itoaOctet(i+1), RegionID: "us-east", ServerHostname: host})
+		e, err := svc.CreateEgress(ctx, CreateEgressInput{ProfileUID: profile.UID, Name: "e" + strconv.Itoa(i+1), RegionID: "us-east", ServerHostname: host})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -142,6 +139,97 @@ func TestDeleteReferencedEgressConflicts(t *testing.T) {
 	}
 	if err := svc.DeleteEgress(e.UID, "direct", false); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestCreateEgressPreservesExplicitZeroKeepalive(t *testing.T) {
+	svc := setupPIATest(t)
+	ctx := context.Background()
+	profile, err := svc.CreateProfile("acct")
+	if err != nil {
+		t.Fatal(err)
+	}
+	zero := 0
+	egress, err := svc.CreateEgress(ctx, CreateEgressInput{
+		ProfileUID: profile.UID, RegionID: "us-east", ServerHostname: "useast1", KeepaliveSeconds: &zero,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if egress.KeepaliveSeconds != 0 {
+		t.Fatalf("keepalive=%d, want 0", egress.KeepaliveSeconds)
+	}
+	var stored model.PiaEgress
+	if err := database.GetDB().Where("uid = ?", egress.UID).First(&stored).Error; err != nil {
+		t.Fatal(err)
+	}
+	if stored.KeepaliveSeconds != 0 {
+		t.Fatalf("stored keepalive=%d, want 0", stored.KeepaliveSeconds)
+	}
+}
+
+func TestReadyOutboundsRecordsApplyTimeOnlyAfterSuccessfulApply(t *testing.T) {
+	svc := setupPIATest(t)
+	ctx := context.Background()
+	profile, err := svc.CreateProfile("acct")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.Authenticate(ctx, profile.UID, "p1234567", []byte("password-long-enough")); err != nil {
+		t.Fatal(err)
+	}
+	egress, err := svc.CreateEgress(ctx, CreateEgressInput{ProfileUID: profile.UID, RegionID: "us-east", ServerHostname: "useast1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.Provision(ctx, egress.UID); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := svc.ReadyOutbounds(); err != nil {
+		t.Fatal(err)
+	}
+	var binding model.PiaBinding
+	if err := database.GetDB().Where("active = ?", true).First(&binding).Error; err != nil {
+		t.Fatal(err)
+	}
+	if binding.LastAppliedAt != 0 {
+		t.Fatalf("config generation recorded an apply at %d", binding.LastAppliedAt)
+	}
+	if err := svc.MarkReadyOutboundsApplied(); err != nil {
+		t.Fatal(err)
+	}
+	if err := database.GetDB().First(&binding, binding.Id).Error; err != nil {
+		t.Fatal(err)
+	}
+	if binding.LastAppliedAt == 0 {
+		t.Fatal("successful apply did not record a timestamp")
+	}
+}
+
+func TestDeleteProfilePreflightsEveryEgress(t *testing.T) {
+	svc := setupPIATest(t)
+	ctx := context.Background()
+	profile, err := svc.CreateProfile("acct")
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, err := svc.CreateEgress(ctx, CreateEgressInput{ProfileUID: profile.UID, RegionID: "us-east", ServerHostname: "useast1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := svc.CreateEgress(ctx, CreateEgressInput{ProfileUID: profile.UID, RegionID: "us-east", ServerHostname: "useast2"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	template := `{"routing":{"rules":[{"outboundTag":"` + second.OutboundTag + `"}]}}`
+	if err := database.GetDB().Create(&model.Setting{Key: "xrayTemplateConfig", Value: template}).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.DeleteProfile(profile.UID); piaprotocol.CodeOf(err) != piaprotocol.CodeDependencyConflict {
+		t.Fatalf("got %s, want dependency conflict: %v", piaprotocol.CodeOf(err), err)
+	}
+	if _, err := svc.GetEgress(first.UID); err != nil {
+		t.Fatalf("first egress was deleted before conflict: %v", err)
 	}
 }
 

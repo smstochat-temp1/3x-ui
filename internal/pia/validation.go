@@ -3,6 +3,7 @@
 package pia
 
 import (
+	"encoding/base64"
 	"net"
 	"strings"
 	"unicode"
@@ -38,5 +39,6 @@ func validHostname(host string) bool {
 }
 
 func validWGKey(key string) bool {
-	return validSecret([]byte(key), 43, 44)
+	decoded, err := base64.StdEncoding.DecodeString(key)
+	return err == nil && len(decoded) == 32
 }

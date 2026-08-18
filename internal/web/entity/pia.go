@@ -55,12 +55,12 @@ type PiaEgressView struct {
 	LastErrorCode    string          `json:"lastErrorCode"`
 	LastErrorMessage string          `json:"lastErrorMessage"`
 	HasActiveBinding bool            `json:"hasActiveBinding" example:"true"`
-	PublicKey        string          `json:"publicKey"`
-	PeerIP           string          `json:"peerIp"`
+	PublicKey        string          `json:"publicKey" example:"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="`
+	PeerIP           string          `json:"peerIp" example:"10.0.0.2/32"`
 	Generation       int             `json:"generation" example:"1"`
 	LastExternalIP   string          `json:"lastExternalIp"`
 	LastLatencyMs    int             `json:"lastLatencyMs"`
-	Binding          *PiaBindingView `json:"binding,omitempty"`
+	Binding          *PiaBindingView `json:"binding,omitempty" example:"{\"uid\":\"b1c2d3e4\",\"publicKey\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=\",\"peerIp\":\"10.0.0.2/32\",\"serverHostname\":\"useast401\",\"serverIp\":\"198.51.100.10\",\"serverPort\":1337,\"generation\":1,\"active\":true}"`
 }
 
 type PiaCatalogStatusView struct {

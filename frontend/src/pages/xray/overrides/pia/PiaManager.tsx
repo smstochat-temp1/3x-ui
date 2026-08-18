@@ -45,6 +45,10 @@ export default function PiaManager({ open, onClose, onChanged }: PiaManagerProps
   const queryClient = useQueryClient();
   const [error, setError] = useState('');
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [authProfileUid, setAuthProfileUid] = useState<string>();
+  const [authUsername, setAuthUsername] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authSubmitting, setAuthSubmitting] = useState(false);
 
   const statusQuery = useQuery({
     queryKey: keys.pia.status(),
@@ -112,13 +116,20 @@ export default function PiaManager({ open, onClose, onChanged }: PiaManagerProps
     await reload();
   }
 
-  async function authenticate(uid: string) {
-    const username = window.prompt(t('pages.xray.pia.username'));
-    if (!username) return;
-    const password = window.prompt(t('pages.xray.pia.password'));
-    if (!password) return;
-    const msg = await piaPost(`/panel/api/pia/profiles/${uid}/authenticate`, { username, password });
+  async function authenticate() {
+    if (!authProfileUid || !authUsername.trim() || !authPassword) return;
+    setAuthSubmitting(true);
+    const msg = await piaPost(`/panel/api/pia/profiles/${authProfileUid}/authenticate`, {
+      username: authUsername.trim(),
+      password: authPassword,
+    });
+    setAuthSubmitting(false);
     setError(msg.success ? '' : msg.msg);
+    if (msg.success) {
+      setAuthProfileUid(undefined);
+      setAuthUsername('');
+      setAuthPassword('');
+    }
     await reload();
   }
 
@@ -154,7 +165,7 @@ export default function PiaManager({ open, onClose, onChanged }: PiaManagerProps
     let deleteRules = false;
     if (deps.length > 0) {
       const ok = await new Promise<boolean>((resolve) => {
-        Modal.confirm({
+        const modal = Modal.confirm({
           title: t('pages.xray.pia.dependencyTitle'),
           content: (
             <Space orientation="vertical">
@@ -167,7 +178,10 @@ export default function PiaManager({ open, onClose, onChanged }: PiaManagerProps
               <Input
                 placeholder={t('pages.xray.pia.replacementTag')}
                 onChange={(e) => {
-                  replacementTag = e.target.value;
+                  replacementTag = e.target.value.trim();
+                  modal.update({
+                    okText: t(replacementTag ? 'update' : 'pages.xray.pia.deleteRules'),
+                  });
                 }}
               />
             </Space>
@@ -237,7 +251,7 @@ export default function PiaManager({ open, onClose, onChanged }: PiaManagerProps
             {
               title: t('pages.xray.pia.signIn'),
               render: (_: unknown, row: PiaProfile) => (
-                <Button size="small" onClick={() => void authenticate(row.uid)}>
+                <Button size="small" onClick={() => setAuthProfileUid(row.uid)}>
                   {t('pages.xray.pia.signIn')}
                 </Button>
               ),
@@ -287,6 +301,36 @@ export default function PiaManager({ open, onClose, onChanged }: PiaManagerProps
           onChanged?.();
         }}
       />
+      <Modal
+        open={Boolean(authProfileUid)}
+        title={t('pages.xray.pia.signIn')}
+        okText={t('pages.xray.pia.signIn')}
+        cancelText={t('cancel')}
+        confirmLoading={authSubmitting}
+        okButtonProps={{ disabled: !authUsername.trim() || !authPassword }}
+        onOk={() => void authenticate()}
+        onCancel={() => {
+          setAuthProfileUid(undefined);
+          setAuthUsername('');
+          setAuthPassword('');
+        }}
+        destroyOnHidden
+      >
+        <Space orientation="vertical" style={{ width: '100%' }}>
+          <Input
+            value={authUsername}
+            placeholder={t('pages.xray.pia.username')}
+            autoComplete="username"
+            onChange={(event) => setAuthUsername(event.target.value)}
+          />
+          <Input.Password
+            value={authPassword}
+            placeholder={t('pages.xray.pia.password')}
+            autoComplete="current-password"
+            onChange={(event) => setAuthPassword(event.target.value)}
+          />
+        </Space>
+      </Modal>
     </Drawer>
   );
 }
@@ -314,6 +358,7 @@ function EgressWizard({
     queryKey: keys.pia.regions(),
     queryFn: async () => {
       const msg = await piaGet<PiaRegion[]>('/panel/api/pia/catalog/regions', piaSchemas.regions);
+      if (!msg.success) throw new Error(msg.msg);
       return Array.isArray(msg.obj) ? msg.obj : [];
     },
     enabled: open,
@@ -322,6 +367,7 @@ function EgressWizard({
     queryKey: keys.pia.servers(regionId || ''),
     queryFn: async () => {
       const msg = await piaGet<PiaServer[]>(`/panel/api/pia/catalog/regions/${regionId}/servers`, piaSchemas.servers);
+      if (!msg.success) throw new Error(msg.msg);
       return Array.isArray(msg.obj) ? msg.obj : [];
     },
     enabled: open && Boolean(regionId),
@@ -338,6 +384,11 @@ function EgressWizard({
     setHostname(undefined);
     setName('');
   }, [open]);
+
+  useEffect(() => {
+    const queryError = regionsQuery.error ?? serversQuery.error;
+    if (queryError) setError((queryError as Error).message);
+  }, [regionsQuery.error, serversQuery.error]);
 
   async function finish() {
     if (!profileUid || !regionId) return;

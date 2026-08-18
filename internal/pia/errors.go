@@ -55,11 +55,19 @@ func (e *Error) Error() string {
 	return fmt.Sprintf("%s: %s", e.Code, e.Message)
 }
 
-func (e *Error) Unwrap() error { return e.cause }
+func (e *Error) Unwrap() error {
+	if e == nil {
+		return nil
+	}
+	return e.cause
+}
 
 func CodeOf(err error) string {
+	if err == nil {
+		return ""
+	}
 	var pe *Error
-	if errors.As(err, &pe) {
+	if errors.As(err, &pe) && pe != nil {
 		return pe.Code
 	}
 	return CodeNetworkUnavailable
@@ -67,7 +75,7 @@ func CodeOf(err error) string {
 
 func MessageOf(err error) string {
 	var pe *Error
-	if errors.As(err, &pe) {
+	if errors.As(err, &pe) && pe != nil {
 		return pe.Message
 	}
 	if err == nil {
