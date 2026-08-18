@@ -163,6 +163,9 @@ function buildOperation(ep, tag, errorSchema) {
     },
     required: ['success', 'msg', 'obj'],
   };
+  if (successExample && typeof successExample === 'object' && !Array.isArray(successExample)) {
+    successExample = { success: true, msg: '', obj: null, ...successExample };
+  }
   let responseSchema = successSchema;
   if (errorSchema) {
     if (SCHEMAS[errorSchema] === undefined) {
@@ -188,9 +191,6 @@ function buildOperation(ep, tag, errorSchema) {
         },
       ],
     };
-    if (successExample && typeof successExample === 'object' && !Array.isArray(successExample) && successExample.msg === undefined) {
-      successExample = { ...successExample, msg: '' };
-    }
   }
   responses['200'] = {
     description: 'Successful response',

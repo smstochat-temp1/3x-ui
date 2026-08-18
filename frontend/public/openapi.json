@@ -3555,7 +3555,8 @@
                 },
                 "example": {
                   "success": true,
-                  "msg": "Logged in successfully"
+                  "msg": "Logged in successfully",
+                  "obj": null
                 }
               }
             }
@@ -3618,7 +3619,9 @@
                   ]
                 },
                 "example": {
-                  "success": true
+                  "success": true,
+                  "msg": "",
+                  "obj": null
                 }
               }
             }
@@ -3660,6 +3663,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": "csrf-token-string"
                 }
               }
@@ -3702,6 +3706,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": false
                 }
               }
@@ -3749,6 +3754,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "clientStats": [
@@ -3835,6 +3841,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "id": 1,
@@ -3897,6 +3904,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "enable": true,
@@ -3959,6 +3967,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     "vless://uuid@host:443?security=reality&...#Germany-alice",
                     "vmess://eyJ2IjoyLC..."
@@ -4223,6 +4232,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "deleted": 2,
                     "skipped": [
@@ -4506,6 +4516,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "deleted": 12
                   }
@@ -4662,7 +4673,9 @@
                   ]
                 },
                 "example": {
-                  "success": true
+                  "success": true,
+                  "msg": "",
+                  "obj": null
                 }
               }
             }
@@ -4715,6 +4728,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "id": 1,
@@ -4814,7 +4828,8 @@
                 },
                 "example": {
                   "success": true,
-                  "msg": "Inbound updated"
+                  "msg": "Inbound updated",
+                  "obj": null
                 }
               }
             }
@@ -4894,6 +4909,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "cpu": 12.5,
                     "mem": {
@@ -4964,6 +4980,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "enabled": true,
                     "installed": true,
@@ -5080,6 +5097,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "t": 1700000000,
@@ -5323,6 +5341,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     "v25.10.31",
                     "v25.9.15",
@@ -5409,6 +5428,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "exitCode": 0,
                     "finishedAt": 1735689612,
@@ -5570,6 +5590,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": "550e8400-e29b-41d4-a716-446655440000"
                 }
               }
@@ -5612,6 +5633,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "webCertFile": "/root/cert/example.com/fullchain.pem",
                     "webKeyFile": "/root/cert/example.com/privkey.pem"
@@ -5657,6 +5679,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "guid": "c3d4-...",
@@ -5707,6 +5730,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "privateKey": "uN9qLfV3zH8w...",
                     "publicKey": "5v8xPqR2sM7k..."
@@ -5752,6 +5776,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "privateKey": "mdsa65priv...",
                     "publicKey": "mdsa65pub...",
@@ -5798,6 +5823,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "clientKey": "mlkem768-client...",
                     "serverKey": "mlkem768-server..."
@@ -5843,6 +5869,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "auths": [
                       {
@@ -6063,6 +6090,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "runId": "1735689600123456789"
                   }
@@ -6277,6 +6305,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": "2025/01/01 12:00:00 [INFO] Server started\n2025/01/01 12:00:01 [INFO] Xray is running"
                 }
               }
@@ -6340,6 +6369,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": "2025/01/01 12:00:00 rejected  vless  proxy  example.com  reason: no valid user\n2025/01/01 12:00:01 direct  freedom  ok"
                 }
               }
@@ -6478,6 +6508,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     "e8e2d3..."
                   ]
@@ -6532,6 +6563,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     "e8e2d3..."
                   ]
@@ -6588,6 +6620,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "alpn": "h2",
                     "certIssuer": "Google Trust Services",
@@ -6666,6 +6699,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "alpn": "h2",
@@ -6736,6 +6770,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "clientEmail": "",
@@ -6842,6 +6877,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "id": 1,
@@ -6969,6 +7005,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "items": [
                       {
@@ -7195,7 +7232,8 @@
                 },
                 "example": {
                   "success": true,
-                  "msg": "Client added"
+                  "msg": "Client added",
+                  "obj": null
                 }
               }
             }
@@ -7266,7 +7304,8 @@
                 },
                 "example": {
                   "success": true,
-                  "msg": "Client updated"
+                  "msg": "Client updated",
+                  "obj": null
                 }
               }
             }
@@ -7328,7 +7367,8 @@
                 },
                 "example": {
                   "success": true,
-                  "msg": "Client deleted"
+                  "msg": "Client deleted",
+                  "obj": null
                 }
               }
             }
@@ -7408,7 +7448,9 @@
                   ]
                 },
                 "example": {
-                  "success": true
+                  "success": true,
+                  "msg": "",
+                  "obj": null
                 }
               }
             }
@@ -7487,7 +7529,9 @@
                   ]
                 },
                 "example": {
-                  "success": true
+                  "success": true,
+                  "msg": "",
+                  "obj": null
                 }
               }
             }
@@ -7575,7 +7619,9 @@
                   ]
                 },
                 "example": {
-                  "success": true
+                  "success": true,
+                  "msg": "",
+                  "obj": null
                 }
               }
             }
@@ -7616,7 +7662,9 @@
                   ]
                 },
                 "example": {
-                  "success": true
+                  "success": true,
+                  "msg": "",
+                  "obj": null
                 }
               }
             }
@@ -7658,6 +7706,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "deleted": 0
                   }
@@ -7702,6 +7751,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "deleted": 0
                   }
@@ -7746,6 +7796,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "client": {
@@ -7817,6 +7868,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "created": 2,
                     "skipped": [
@@ -7886,6 +7938,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "adjusted": 2,
                     "skipped": [
@@ -7952,6 +8005,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "changed": 2,
                     "skipped": [
@@ -8018,6 +8072,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "changed": 2,
                     "skipped": [
@@ -8085,6 +8140,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "deleted": 2,
                     "skipped": [
@@ -8172,6 +8228,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "created": 2,
                     "skipped": [
@@ -8239,6 +8296,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "affected": 2
                   }
@@ -8299,6 +8357,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "affected": 2
                   }
@@ -8381,6 +8440,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "attached": [
                       "alice",
@@ -8470,6 +8530,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "detached": [
                       "alice",
@@ -8535,6 +8596,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "affected": 2
                   }
@@ -8579,6 +8641,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "name": "customer-a",
@@ -8641,6 +8704,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     "alice",
                     "bob",
@@ -8700,6 +8764,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "name": "customer-a"
                   }
@@ -8758,6 +8823,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "affected": 5
                   }
@@ -8815,6 +8881,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "affected": 5
                   }
@@ -8872,6 +8939,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "name": "customer-a"
                   }
@@ -9137,6 +9205,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "id": 1,
@@ -9236,6 +9305,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     "user1",
                     "user2"
@@ -9281,6 +9351,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "a1b2-...": [
                       "user1"
@@ -9331,6 +9402,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "a1b2-...": {
                       "user1": [
@@ -9382,6 +9454,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "a1b2-...": [
                       "in-443-tcp",
@@ -9429,6 +9502,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "user1": 1700000000,
                     "user2": 1699999000
@@ -9487,6 +9561,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "down": 2097152,
                     "email": "user1",
@@ -9554,6 +9629,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     "vless://uuid@host:443?security=reality&...#user1",
                     "vmess://eyJ2IjoyLC..."
@@ -9610,6 +9686,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     "vless://uuid@host:443?...#user1"
                   ]
@@ -9659,6 +9736,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "activeCount": 20,
@@ -9747,6 +9825,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "caCert": "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----\n"
                   }
@@ -9893,6 +9972,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "activeCount": 20,
                     "address": "node.example.com",
@@ -9990,6 +10070,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "webCertFile": "/root/cert/example.com/fullchain.pem",
                     "webKeyFile": "/root/cert/example.com/privkey.pem"
@@ -10059,6 +10140,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "activeCount": 20,
                     "address": "node.example.com",
@@ -10346,6 +10428,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "cpuPct": 12.5,
                     "error": "",
@@ -10415,6 +10498,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": "k3b1...base64-sha256...="
                 }
               }
@@ -10475,6 +10559,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "tag": "inbound-443",
@@ -10591,6 +10676,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "id": 1,
@@ -10717,6 +10803,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "allowInsecure": false,
@@ -10820,6 +10907,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "allowInsecure": false,
                     "alpn": [
@@ -10924,6 +11012,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "allowInsecure": false,
@@ -11014,6 +11103,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     "CDN",
                     "EU",
@@ -11089,6 +11179,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "address": "cdn.example.com",
@@ -11218,6 +11309,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "address": "cdn.example.com",
@@ -11501,6 +11593,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "address": "cdn.example.com",
@@ -11912,7 +12005,8 @@
                 },
                 "example": {
                   "success": true,
-                  "msg": ""
+                  "msg": "",
+                  "obj": null
                 }
               }
             }
@@ -12070,8 +12164,9 @@
                 },
                 "example": {
                   "success": true,
-                  "stage": "send",
-                  "msg": "Test email sent successfully"
+                  "msg": "Test email sent successfully",
+                  "obj": null,
+                  "stage": "send"
                 }
               }
             }
@@ -12113,7 +12208,8 @@
                 },
                 "example": {
                   "success": true,
-                  "msg": "Test message sent to Telegram"
+                  "msg": "Test message sent to Telegram",
+                  "obj": null
                 }
               }
             }
@@ -12193,6 +12289,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "id": 1,
@@ -12278,6 +12375,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "createdAt": 1736000000,
                     "enabled": true,
@@ -12382,7 +12480,9 @@
                   ]
                 },
                 "example": {
-                  "success": true
+                  "success": true,
+                  "msg": "",
+                  "obj": null
                 }
               }
             }
@@ -12462,7 +12562,9 @@
                   ]
                 },
                 "example": {
-                  "success": true
+                  "success": true,
+                  "msg": "",
+                  "obj": null
                 }
               }
             }
@@ -12504,6 +12606,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "xraySetting": "{...raw xray config...}",
                     "inboundTags": "[\"in-443-tcp\"]",
@@ -13727,12 +13830,12 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "enabled": false,
                     "encryptionMode": "required",
                     "secretboxReady": true
-                  },
-                  "msg": ""
+                  }
                 }
               }
             }
@@ -13813,6 +13916,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "accountHint": "p***34",
@@ -13827,8 +13931,7 @@
                       "tokenExpiresAt": 1760000000,
                       "uid": "a1b2c3d4e5f6"
                     }
-                  ],
-                  "msg": ""
+                  ]
                 }
               }
             }
@@ -13923,6 +14026,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "accountHint": "p***34",
                     "authStatus": "valid",
@@ -13935,8 +14039,7 @@
                     "revision": 1,
                     "tokenExpiresAt": 1760000000,
                     "uid": "a1b2c3d4e5f6"
-                  },
-                  "msg": ""
+                  }
                 }
               }
             }
@@ -14049,6 +14152,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "accountHint": "p***34",
                     "authStatus": "valid",
@@ -14061,8 +14165,7 @@
                     "revision": 1,
                     "tokenExpiresAt": 1760000000,
                     "uid": "a1b2c3d4e5f6"
-                  },
-                  "msg": ""
+                  }
                 }
               }
             }
@@ -14171,6 +14274,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "accountHint": "p***34",
                     "authStatus": "valid",
@@ -14183,8 +14287,7 @@
                     "revision": 1,
                     "tokenExpiresAt": 1760000000,
                     "uid": "a1b2c3d4e5f6"
-                  },
-                  "msg": ""
+                  }
                 }
               }
             }
@@ -14343,6 +14446,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "fetchedAt": 1760000000,
                     "fresh": true,
@@ -14352,8 +14456,7 @@
                     "regionCount": 12,
                     "serverCount": 40,
                     "signatureVerified": true
-                  },
-                  "msg": ""
+                  }
                 }
               }
             }
@@ -14431,6 +14534,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "fetchedAt": 1760000000,
                     "fresh": true,
@@ -14440,8 +14544,7 @@
                     "regionCount": 12,
                     "serverCount": 40,
                     "signatureVerified": true
-                  },
-                  "msg": ""
+                  }
                 }
               }
             }
@@ -14522,6 +14625,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "countryCode": "US",
@@ -14529,8 +14633,7 @@
                       "name": "US East",
                       "serverCount": 3
                     }
-                  ],
-                  "msg": ""
+                  ]
                 }
               }
             }
@@ -14622,13 +14725,13 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "hostname": "useast401",
                       "ip": "198.51.100.10"
                     }
-                  ],
-                  "msg": ""
+                  ]
                 }
               }
             }
@@ -14709,6 +14812,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "binding": {
@@ -14743,8 +14847,7 @@
                       "status": "ready",
                       "uid": "e1f2a3b4"
                     }
-                  ],
-                  "msg": ""
+                  ]
                 }
               }
             }
@@ -14864,6 +14967,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "binding": {
                       "active": true,
@@ -14896,8 +15000,7 @@
                     "serverIp": "198.51.100.10",
                     "status": "ready",
                     "uid": "e1f2a3b4"
-                  },
-                  "msg": ""
+                  }
                 }
               }
             }
@@ -14986,6 +15089,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "binding": {
                       "active": true,
@@ -15018,8 +15122,7 @@
                     "serverIp": "198.51.100.10",
                     "status": "ready",
                     "uid": "e1f2a3b4"
-                  },
-                  "msg": ""
+                  }
                 }
               }
             }
@@ -15134,6 +15237,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "binding": {
                       "active": true,
@@ -15166,8 +15270,7 @@
                     "serverIp": "198.51.100.10",
                     "status": "ready",
                     "uid": "e1f2a3b4"
-                  },
-                  "msg": ""
+                  }
                 }
               }
             }
@@ -15357,6 +15460,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "binding": {
                       "active": true,
@@ -15389,8 +15493,7 @@
                     "serverIp": "198.51.100.10",
                     "status": "ready",
                     "uid": "e1f2a3b4"
-                  },
-                  "msg": ""
+                  }
                 }
               }
             }
@@ -15479,6 +15582,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "binding": {
                       "active": true,
@@ -15511,8 +15615,7 @@
                     "serverIp": "198.51.100.10",
                     "status": "ready",
                     "uid": "e1f2a3b4"
-                  },
-                  "msg": ""
+                  }
                 }
               }
             }
@@ -15601,6 +15704,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "binding": {
                       "active": true,
@@ -15633,8 +15737,7 @@
                     "serverIp": "198.51.100.10",
                     "status": "ready",
                     "uid": "e1f2a3b4"
-                  },
-                  "msg": ""
+                  }
                 }
               }
             }
@@ -15826,6 +15929,7 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "binding": {
                       "active": true,
@@ -15858,8 +15962,7 @@
                     "serverIp": "198.51.100.10",
                     "status": "ready",
                     "uid": "e1f2a3b4"
-                  },
-                  "msg": ""
+                  }
                 }
               }
             }
@@ -15968,11 +16071,11 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": {
                     "enabled": false,
                     "status": "disabled"
-                  },
-                  "msg": ""
+                  }
                 }
               }
             }
@@ -16064,14 +16167,14 @@
                 },
                 "example": {
                   "success": true,
+                  "msg": "",
                   "obj": [
                     {
                       "field": "outboundTag",
                       "kind": "routing_rule",
                       "label": "rule 3"
                     }
-                  ],
-                  "msg": ""
+                  ]
                 }
               }
             }
@@ -16333,6 +16436,9 @@
                   ]
                 },
                 "example": {
+                  "success": true,
+                  "msg": "",
+                  "obj": null,
                   "type": "status",
                   "data": {
                     "cpu": 12.5,
@@ -16384,6 +16490,9 @@
                   ]
                 },
                 "example": {
+                  "success": true,
+                  "msg": "",
+                  "obj": null,
                   "type": "xrayState",
                   "data": "running"
                 }
@@ -16426,6 +16535,9 @@
                   ]
                 },
                 "example": {
+                  "success": true,
+                  "msg": "",
+                  "obj": null,
                   "type": "notification",
                   "title": "Xray service restarted",
                   "body": "Xray has been restarted successfully",
@@ -16470,6 +16582,9 @@
                   ]
                 },
                 "example": {
+                  "success": true,
+                  "msg": "",
+                  "obj": null,
                   "type": "invalidate",
                   "resource": "inbounds"
                 }
