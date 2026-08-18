@@ -2,7 +2,6 @@
 
 - Status: accepted
 - Date: 2026-08-17
-- Baseline: 3x-ui `8cec47a8`, Go 1.26, xray-core `v1.260327.1-0.20260728075948-5ca6f4b7d4dc`
 
 ## Decision
 
@@ -16,17 +15,13 @@ singleton outbound authored in the Xray template JSON.
 4. Ready bindings are merged in `GetXrayConfig` after subscription outbounds
    and before panel/node/mtproto egress injection.
 5. The frontend never receives token, password, or private key material.
-6. Multi-node fan-out is out of scope for the first ship; `PiaBinding.node_id`
-   is reserved (`NULL` = local panel).
+6. PIA bindings are local-panel scoped; `PiaBinding.node_id` is reserved
+   (`NULL` = local panel).
 7. Peer `allowedIPs` is IPv4-only (`0.0.0.0/0`). IPv6 is not claimed as a PIA
    tunnel. Existing routing rules are not auto-rewritten.
-
-## Availability
-
-PIA management is available alongside NordVPN and WARP without a separate
-feature flag. Secretbox must be `migration` or `required` before a token or
-WireGuard private key is stored. Only ready bindings with decryptable keys are
-injected into Xray.
+8. Secretbox must be `migration` or `required` before a token or WireGuard
+   private key is stored. Only ready bindings with decryptable keys are injected
+   into Xray.
 
 ## Consequences
 

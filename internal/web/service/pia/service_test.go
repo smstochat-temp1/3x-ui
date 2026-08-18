@@ -113,10 +113,10 @@ func TestThreeReadyBindingsHaveDistinctKeysAndTags(t *testing.T) {
 		t.Fatalf("ready=%d skipped=%v err=%v", len(ready), skipped, err)
 	}
 	if tags := svc.PublicTags(); len(tags) != 3 {
-		t.Fatalf("ready PIA tags must be public without a feature gate: %v", tags)
+		t.Fatalf("ready PIA tags must be public: %v", tags)
 	}
 	if outbounds := svc.PublicOutbounds(); len(outbounds) != 3 {
-		t.Fatalf("enabled PIA outbounds must be public without a feature gate: %v", outbounds)
+		t.Fatalf("enabled PIA outbounds must be public: %v", outbounds)
 	}
 	raw, _ := json.Marshal(views)
 	if strings.Contains(string(raw), "TEST-PIA-PASSWORD-MUST-NOT-LEAK") || strings.Contains(string(raw), "tokentokentokentoken12") {

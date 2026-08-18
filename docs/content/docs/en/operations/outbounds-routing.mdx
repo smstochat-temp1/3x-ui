@@ -89,8 +89,8 @@ NordVPN outbound.
 ## PIA managed WireGuard egress
 
 Private Internet Access exits are **database-managed outbounds**, not a single
-template JSON object. They are available alongside NordVPN and WARP. Turn on
-node-token encryption (`NODE_TOKEN_ENCRYPTION=migration` or `required`) before
+template JSON object. Configure node-token encryption
+(`NODE_TOKEN_ENCRYPTION=migration` or `required`) before
 storing credentials or private keys. The keyring file must be mode `0600`, or
 set `XUI_NODE_TOKEN_KEY`. Tokens and WireGuard private keys are stored only as
 AES-GCM ciphertext.
@@ -122,9 +122,10 @@ process is left unchanged.
 
 ### Backup, restore, rollback
 
-- A database backup **without** the keyring cannot decrypt PIA tokens or
-  private keys. Keep the keyring (mode `0600`) with the backup.
-- Restore: restore the database and the same keyring / `XUI_NODE_TOKEN_KEY`, then
+- A database backup can be decrypted only with the original encryption key
+  material. Retain the keyring (mode `0600`) or `XUI_NODE_TOKEN_KEY` with the
+  backup.
+- Restore the database and the matching keyring or `XUI_NODE_TOKEN_KEY`, then
   start the panel.
 - Rollback to a build without PIA:
 

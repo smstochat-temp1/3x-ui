@@ -85,10 +85,11 @@ NordVPN 出站。
 ## PIA 受管 WireGuard 出口
 
 Private Internet Access 出口是**数据库中的受管出站**，不是模板里的单个 JSON
-对象，与 NordVPN 和 WARP 一样无需单独的功能开关。写入凭据或私钥前必须开启
+对象。写入凭据或私钥前必须开启
 节点 token 加密（`NODE_TOKEN_ENCRYPTION=migration` 或 `required`，密钥文件
 权限 `0600`，或 `XUI_NODE_TOKEN_KEY`）。Token 与 WireGuard 私钥只以
-AES-GCM 密文保存；没有密钥环的备份无法解密。
+AES-GCM 密文保存；数据库备份只有使用原始加密密钥材料（密钥文件或
+`XUI_NODE_TOKEN_KEY`）才能解密。
 
 在 **Xray → 出站 → 更多 → PIA** 打开管理器：创建档案并登录（密码不落库）、
 刷新已验签的服务器列表、依次选择国家/区域/服务器创建出站（不可变标签 `pia-<id>`）、
