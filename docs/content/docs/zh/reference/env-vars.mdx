@@ -62,7 +62,7 @@ icon: Variable
 
 ## PIA 受管出口
 
-写入 PIA token 或 WireGuard 私钥前，需要开启节点 token 加密（`NODE_TOKEN_ENCRYPTION=migration|required`，密钥文件权限 `0600`，或设置 `XUI_NODE_TOKEN_KEY`）。数据库备份只有使用原始加密密钥材料才能解密，无论该密钥来自密钥文件还是 `XUI_NODE_TOKEN_KEY`。参见 [出站与路由](/docs/operations/outbounds-routing)。
+写入 PIA token 或 WireGuard 私钥前，将 `NODE_TOKEN_ENCRYPTION` 设置为 `migration` 或 `required`。同时配置一种密钥来源：权限为 `0600` 的密钥文件，或 `XUI_NODE_TOKEN_KEY`。数据库备份只有使用原始加密密钥材料才能解密。参见 [出站与路由](/zh/docs/operations/outbounds-routing)。
 
 ## 隧道健康监测器
 

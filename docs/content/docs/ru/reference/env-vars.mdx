@@ -65,7 +65,7 @@ icon: Variable
 
 ## Управляемый выход PIA
 
-Перед сохранением токена PIA или закрытого ключа WireGuard нужна шифровка node-token (`NODE_TOKEN_ENCRYPTION=migration|required`, файл ключей с режимом `0600` или `XUI_NODE_TOKEN_KEY`). Для расшифровки резервной копии необходим исходный материал ключа шифрования — из keyring или `XUI_NODE_TOKEN_KEY`. См. [Исходящие и маршрутизация](/docs/operations/outbounds-routing).
+Перед сохранением токена PIA или закрытого ключа WireGuard установите `NODE_TOKEN_ENCRYPTION` в `migration` или `required`. Также настройте источник ключа: файл keyring с режимом `0600` или `XUI_NODE_TOKEN_KEY`. Для расшифровки резервной копии необходим исходный материал ключа шифрования. См. [Исходящие и маршрутизация](/ru/docs/operations/outbounds-routing).
 
 ## Монитор работоспособности туннеля
 
