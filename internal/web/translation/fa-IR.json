@@ -1619,7 +1619,7 @@
         "outboundAdded": "خروجی PIA افزوده شد",
         "outboundUpdated": "خروجی PIA به‌روز شد",
         "addedServers": "سرورهای افزوده‌شده",
-        "alreadyAdded": "این سرور از قبل در فهرست خروجی است. برای تمدید کلید {{reset}} را بزنید."
+        "alreadyAdded": "این سرور از قبل در فهرست خروجی است. برای تمدید کلید {reset} را بزنید."
       },
       "tabBalancerSettings": "تنظیمات بالانسر",
       "tabObservatory": "رصدخانه",

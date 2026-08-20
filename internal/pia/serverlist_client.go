@@ -68,24 +68,6 @@ func (c *CatalogClient) Fetch(ctx context.Context) (ServerListSnapshot, error) {
 	return ServerListSnapshot{Payload: verified, SchemaHint: schemaHint(c.Endpoint), SignatureVerified: true}, nil
 }
 
-func (c *CatalogClient) FetchCatalog(ctx context.Context) (CatalogSnapshot, error) {
-	snap, err := c.Fetch(ctx)
-	if err != nil {
-		return CatalogSnapshot{}, err
-	}
-	regions, schema, err := ParseServerList(snap.Payload, snap.SchemaHint)
-	if err != nil {
-		return CatalogSnapshot{}, err
-	}
-	return CatalogSnapshot{
-		Payload:           snap.Payload,
-		Schema:            schema,
-		SignatureVerified: true,
-		Regions:           regions,
-		Digest:            sha256Hex(snap.Payload),
-	}, nil
-}
-
 func schemaHint(endpoint string) string {
 	parsed, err := url.Parse(endpoint)
 	if err != nil {

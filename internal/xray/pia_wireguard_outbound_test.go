@@ -74,7 +74,7 @@ func TestValidateOutboundConfig_TwoUserspaceWireGuard(t *testing.T) {
 	}
 	for _, ip := range ips {
 		if strings.Contains(ip.(string), ":") {
-			t.Fatalf("IPv6 allowedIP leaked into PIA spike fixture: %v", ip)
+			t.Fatalf("IPv6 allowedIP leaked into PIA fixture: %v", ip)
 		}
 	}
 }

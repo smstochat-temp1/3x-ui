@@ -15,22 +15,13 @@ const (
 	CodeCatalogUnavailable        = "pia_catalog_unavailable"
 	CodeCatalogSignatureInvalid   = "pia_catalog_signature_invalid"
 	CodeCatalogSchemaUnsupported  = "pia_catalog_schema_unsupported"
-	CodeRegionNotFound            = "pia_region_not_found"
 	CodeServerNotFound            = "pia_server_not_found"
 	CodeTLSValidation             = "pia_tls_validation"
 	CodeRegistrationRejected      = "pia_registration_rejected"
 	CodeRegistrationInvalid       = "pia_registration_response_invalid"
-	CodeResponseTooLarge          = "pia_response_too_large"
 	CodeTimeout                   = "pia_timeout"
 	CodeCancelled                 = "pia_cancelled"
 	CodeNetworkUnavailable        = "pia_network_unavailable"
-	CodeEncryptionRequired        = "pia_encryption_required"
-	CodeNotFound                  = "pia_not_found"
-	CodeTagConflict               = "pia_tag_conflict"
-	CodeDependencyConflict        = "pia_dependency_conflict"
-	CodeNotReady                  = "pia_not_ready"
-	CodeCooldown                  = "pia_cooldown"
-	CodeApplyBlocked              = "pia_apply_blocked"
 )
 
 type Error struct {

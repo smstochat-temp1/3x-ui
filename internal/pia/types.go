@@ -1,7 +1,7 @@
-// Package pia is a standalone PIA WireGuard control-plane client.
-//
 // Copyright (c) 2026 Masterain. MIT License.
 // Adapted from PIA-Wireguard-Config-Generator-GUI (commit 53686fcd).
+
+// Package pia is a standalone PIA WireGuard control-plane client.
 package pia
 
 import (
@@ -24,23 +24,9 @@ type WireGuardServer struct {
 	IP       netip.Addr
 }
 
-func (s WireGuardServer) ID() string {
-	return s.Hostname
-}
-
 type Token struct {
 	Value     []byte
 	ExpiresAt time.Time
-}
-
-func (t *Token) Clear() {
-	if t == nil {
-		return
-	}
-	for i := range t.Value {
-		t.Value[i] = 0
-	}
-	t.Value = nil
 }
 
 type Registration struct {
@@ -55,18 +41,6 @@ type Authenticator interface {
 	Authenticate(ctx context.Context, username string, password []byte) (Token, error)
 }
 
-type CatalogSource interface {
-	FetchCatalog(ctx context.Context) (CatalogSnapshot, error)
-}
-
 type Registrar interface {
 	RegisterKey(ctx context.Context, server WireGuardServer, token string, publicKey string) (Registration, error)
-}
-
-type CatalogSnapshot struct {
-	Payload           []byte
-	Schema            string
-	SignatureVerified bool
-	Regions           []Region
-	Digest            string
 }

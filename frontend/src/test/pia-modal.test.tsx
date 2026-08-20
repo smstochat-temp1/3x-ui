@@ -151,7 +151,7 @@ describe('PIA modal', () => {
       const btn = screen.getByRole('button', { name: /Add outbound/ });
       expect((btn as HTMLButtonElement).disabled).toBe(true);
     });
-    expect(screen.getByText(/already in the outbound list/)).toBeTruthy();
+    expect(screen.getByText(/Use Reset to renew its key/)).toBeTruthy();
   });
 
   it('resets an existing PIA outbound in place', async () => {

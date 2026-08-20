@@ -192,6 +192,7 @@ func postgresModelSettled(mdl any) bool {
 	return true
 }
 
+// Drop tables from the short-lived managed-egress PIA schema (removed 2026-08-20).
 func dropPiaManagedTables() error {
 	for _, name := range []string{"pia_bindings", "pia_egresses", "pia_profiles", "pia_catalog_snapshots"} {
 		if !db.Migrator().HasTable(name) {

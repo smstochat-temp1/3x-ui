@@ -54,15 +54,6 @@ func (c *Catalog) ListRegions(ctx context.Context) ([]Region, string, error) {
 	return cloneRegions(regions), schema, nil
 }
 
-func (c *Catalog) Invalidate() {
-	c.mu.Lock()
-	c.cached = nil
-	c.schema = ""
-	c.verified = false
-	c.fetchedAt = time.Time{}
-	c.mu.Unlock()
-}
-
 func cloneRegions(regions []Region) []Region {
 	result := make([]Region, len(regions))
 	for i, region := range regions {

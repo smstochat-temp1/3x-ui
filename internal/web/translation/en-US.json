@@ -1736,7 +1736,7 @@
         "outboundAdded": "PIA outbound added",
         "outboundUpdated": "PIA outbound updated",
         "addedServers": "Added servers",
-        "alreadyAdded": "This server is already in the outbound list. Use {{reset}} to renew its key."
+        "alreadyAdded": "This server is already in the outbound list. Use {reset} to renew its key."
       },
       "tabBalancerSettings": "Balancer Settings",
       "tabObservatory": "Observatory",

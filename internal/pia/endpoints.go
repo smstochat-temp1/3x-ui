@@ -16,7 +16,6 @@ const (
 	DefaultMaxResponseBody    = int64(64 << 10)
 	DefaultRequestTimeout     = 20 * time.Second
 	DefaultCatalogFreshTTL    = 6 * time.Hour
-	DefaultCatalogMaxStale    = 7 * 24 * time.Hour
 	DefaultTokenTTL           = 24 * time.Hour
 )
 

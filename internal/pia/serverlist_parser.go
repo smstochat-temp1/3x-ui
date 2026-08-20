@@ -196,18 +196,3 @@ func parseCatalog(raw []byte, allowV7Aliases bool) ([]Region, error) {
 	})
 	return regions, nil
 }
-
-func FindRegionServer(regions []Region, regionID, serverID string) (Region, WireGuardServer, error) {
-	for _, region := range regions {
-		if !strings.EqualFold(region.ID, regionID) {
-			continue
-		}
-		for _, server := range region.WireGuard {
-			if server.Hostname == serverID {
-				return region, server, nil
-			}
-		}
-		return Region{}, WireGuardServer{}, NewError(CodeServerNotFound, "The selected PIA WireGuard server is not in the verified catalog.")
-	}
-	return Region{}, WireGuardServer{}, NewError(CodeRegionNotFound, "The selected PIA region is not in the verified catalog.")
-}
