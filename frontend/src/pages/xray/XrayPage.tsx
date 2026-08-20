@@ -32,7 +32,7 @@ import { OutboundsTab } from './outbounds';
 import { BalancersTab } from './balancers';
 import { cleanupOrphanedBalancerLoopbacks, ensureMissingBalancerLoopbacks, detectBalancerCycles } from './balancers/balancer-loopback';
 import { DnsTab } from './dns';
-import { WarpModal, NordModal } from './overrides';
+import { WarpModal, NordModal, PiaModal } from './overrides';
 import './XrayPage.css';
 
 const SECTION_SLUGS = ['basic', 'routing', 'outbound', 'balancer', 'dns', 'advanced'];
@@ -76,6 +76,7 @@ export default function XrayPage() {
 
   const [warpOpen, setWarpOpen] = useState(false);
   const [nordOpen, setNordOpen] = useState(false);
+  const [piaOpen, setPiaOpen] = useState(false);
   const [advSettings, setAdvSettings] = useState<AdvKey>('xraySetting');
   const location = useLocation();
   const navigate = useNavigate();
@@ -244,6 +245,7 @@ export default function XrayPage() {
             onTestAll={testAllOutbounds}
             onShowWarp={() => setWarpOpen(true)}
             onShowNord={() => setNordOpen(true)}
+            onShowPia={() => setPiaOpen(true)}
             onRefreshXrayData={fetchAll}
           />
         );
@@ -369,6 +371,13 @@ export default function XrayPage() {
           onResetOutbound={onResetOutbound}
           onRemoveOutbound={onRemoveOutboundByIndex}
           onRemoveRoutingRules={onRemoveRoutingRules}
+        />
+        <PiaModal
+          open={piaOpen}
+          templateSettings={templateSettings}
+          onClose={() => setPiaOpen(false)}
+          onAddOutbound={onAddOutbound}
+          onResetOutbound={onResetOutbound}
         />
       </Layout>
     </ConfigProvider>

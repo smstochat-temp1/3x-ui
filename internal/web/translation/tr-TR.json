@@ -1608,6 +1608,19 @@
         "toastDeleted": "Silindi",
         "toastDeleteFailed": "Silme işlemi başarısız"
       },
+      "pia": {
+        "menu": "PIA",
+        "username": "PIA username",
+        "password": "PIA password",
+        "account": "Account",
+        "region": "Region",
+        "allRegions": "All regions",
+        "noServers": "No servers found for the selected country",
+        "outboundAdded": "PIA outbound added",
+        "outboundUpdated": "PIA outbound updated",
+        "addedServers": "Added servers",
+        "alreadyAdded": "This server is already in the outbound list. Use {reset} to renew its key."
+      },
       "tabBalancerSettings": "Dengeleyici Ayarları",
       "tabObservatory": "Gözlemci",
       "observatory": {
