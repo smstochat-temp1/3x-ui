@@ -81,10 +81,6 @@ export default function GeodataSection({ active, onBusy, onClose }: GeodataSecti
       for (const tag of subTags) {
         if (typeof tag === 'string' && tag) tags.add(tag);
       }
-      const piaTags = Array.isArray(payload.piaOutboundTags) ? payload.piaOutboundTags : [];
-      for (const tag of piaTags) {
-        if (typeof tag === 'string' && tag) tags.add(tag);
-      }
       setOutboundTags([...tags]);
     } finally {
       setLoading(false);

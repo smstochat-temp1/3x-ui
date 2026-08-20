@@ -32,7 +32,7 @@ import { OutboundsTab } from './outbounds';
 import { BalancersTab } from './balancers';
 import { cleanupOrphanedBalancerLoopbacks, ensureMissingBalancerLoopbacks, detectBalancerCycles } from './balancers/balancer-loopback';
 import { DnsTab } from './dns';
-import { WarpModal, NordModal, PiaManager } from './overrides';
+import { WarpModal, NordModal, PiaModal } from './overrides';
 import './XrayPage.css';
 
 const SECTION_SLUGS = ['basic', 'routing', 'outbound', 'balancer', 'dns', 'advanced'];
@@ -61,8 +61,6 @@ export default function XrayPage() {
     clientReverseTags,
     subscriptionOutbounds,
     subscriptionOutboundTags,
-    piaOutbounds,
-    piaOutboundTags,
     outboundsTraffic,
     outboundTestStates,
     subscriptionTestStates,
@@ -225,7 +223,6 @@ export default function XrayPage() {
             inboundTags={inboundTags}
             clientReverseTags={clientReverseTags}
             subscriptionOutboundTags={subscriptionOutboundTags}
-            piaOutboundTags={piaOutboundTags}
             isMobile={isMobile}
           />
         );
@@ -241,8 +238,6 @@ export default function XrayPage() {
             inboundTags={inboundTags}
             subscriptionOutbounds={subscriptionOutbounds}
             subscriptionOutboundTags={subscriptionOutboundTags}
-            piaOutbounds={piaOutbounds}
-            piaOutboundTags={piaOutboundTags}
             isMobile={isMobile}
             onResetTraffic={resetOutboundsTraffic}
             onTest={onTestOutbound}
@@ -261,7 +256,6 @@ export default function XrayPage() {
             setTemplateSettings={setTemplateSettings}
             clientReverseTags={clientReverseTags}
             subscriptionOutboundTags={subscriptionOutboundTags}
-            piaOutboundTags={piaOutboundTags}
             isMobile={isMobile}
           />
         );
@@ -378,7 +372,13 @@ export default function XrayPage() {
           onRemoveOutbound={onRemoveOutboundByIndex}
           onRemoveRoutingRules={onRemoveRoutingRules}
         />
-        <PiaManager open={piaOpen} onClose={() => setPiaOpen(false)} onChanged={fetchAll} />
+        <PiaModal
+          open={piaOpen}
+          templateSettings={templateSettings}
+          onClose={() => setPiaOpen(false)}
+          onAddOutbound={onAddOutbound}
+          onResetOutbound={onResetOutbound}
+        />
       </Layout>
     </ConfigProvider>
   );

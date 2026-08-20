@@ -1,12 +1,12 @@
 ---
 title: 出站与路由
-description: 在 3x-ui 中调整出口流量——WARP、NordVPN、PIA 受管 WireGuard、出站订阅（服务器池）、路由规则以及负载均衡器。
+description: 在 3x-ui 中调整出口流量——WARP、NordVPN、PIA WireGuard、出站订阅（服务器池）、路由规则以及负载均衡器。
 icon: Route
 ---
 
 入站负责接受客户端；**出站**则决定客户端的流量接下来发往何处。
 3x-ui 可以让流量经由 Cloudflare WARP、NordVPN、Private Internet Access
-（受管 WireGuard），或从订阅导入的任意出站池转发，
+（WireGuard），或从订阅导入的任意出站池转发，
 并通过路由规则和均衡器在它们之间进行选择。
 
 ## 编辑出站与路由
@@ -82,23 +82,15 @@ WARP 账户，并将其接入一个标签为 **`warp`** 的 WireGuard 出站：
 直接接受一个私钥），并列出国家/服务器，从而让你构建一个
 NordVPN 出站。
 
-## PIA 受管 WireGuard 出口
+## PIA WireGuard
 
-Private Internet Access 出口是**数据库中的受管出站**，不是模板里的单个 JSON
-对象。写入凭据或私钥前必须开启
-节点 token 加密（`NODE_TOKEN_ENCRYPTION=migration` 或 `required`，密钥文件
-权限 `0600`，或 `XUI_NODE_TOKEN_KEY`）。Token 与 WireGuard 私钥只以
-AES-GCM 密文保存；数据库备份只有使用原始加密密钥材料（密钥文件或
-`XUI_NODE_TOKEN_KEY`）才能解密。
+3x-ui 可以用 PIA 用户名和密码登录，从已验签的服务器列表里选择国家/区域/服务器，
+并生成 WireGuard 出站。打开 **Xray → 出站 → 更多 → PIA**，登录后选服务器并添加出站。
+可以添加多台服务器（每个 hostname 一条出站）。标签为 `pia-<region>-<server>`（例如
+`pia-us-east-useast1`）。添加或对该行 **Reset** 会向该服务器的 PIA `/addKey` 注册密钥。
+同一 hostname 不能添加两次。登出只清除保存的 token；删除出站请在出站列表里操作。
 
-在 **Xray → 出站 → 更多 → PIA** 打开管理器：创建档案并登录（密码不落库）、
-刷新已验签的服务器列表、依次选择国家/区域/服务器创建出站（不可变标签 `pia-<id>`）、
-向 PIA `/addKey` 注册独立密钥，再把流量路由到这些标签。已就绪的出站在订阅
-出站之后注入。
-
-对端 `allowedIPs` 仅为 `0.0.0.0/0`（IPv4）。现有路由不会自动改写。删除仍被
-引用的标签会失败，直到你提供替代标签或删除相关规则。回滚：先禁用/删除所有
-PIA 出站并清除引用，再降级面板二进制。
+密码不落库。对端 `allowedIPs` 仅为 `0.0.0.0/0`（IPv4）。
 
 ## 出站订阅（服务器池）
 

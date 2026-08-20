@@ -1,31 +1,32 @@
-# ADR: PIA managed WireGuard egress
+# ADR: PIA WireGuard outbound
 
-- Status: accepted
+- Status: superseded
 - Date: 2026-08-17
+- Superseded: 2026-08-20
 
 ## Decision
 
-PIA WireGuard exits are **database-managed domain objects**, not a Nord-style
-singleton outbound authored in the Xray template JSON.
+PIA WireGuard exits are **template outbounds**, one per distinct server,
+authored in the Xray JSON (not a Nord-style singleton).
 
-1. Protocol I/O lives in `internal/pia` with no Gin/GORM/Xray imports.
-2. Each egress has a stable immutable outbound tag (`pia-<id>`) and its own key.
-3. Token and WireGuard private keys are stored only via AES-GCM secretbox
-   (the nodetoken keyring). `ModeOff` refuses PIA writes.
-4. Ready bindings are merged in `GetXrayConfig` after subscription outbounds
-   and before panel/node/mtproto egress injection.
-5. The frontend never receives token, password, or private key material.
-6. PIA bindings are local-panel scoped; `PiaBinding.node_id` is reserved
-   (`NULL` = local panel).
-7. Peer `allowedIPs` is IPv4-only (`0.0.0.0/0`). IPv6 is not claimed as a PIA
-   tunnel. Existing routing rules are not auto-rewritten.
-8. Secretbox must be `migration` or `required` before a token or WireGuard
-   private key is stored. Only ready bindings with decryptable keys are injected
-   into Xray.
+1. Protocol I/O lives in `internal/pia` (auth, signature-verified server
+   list, `/addKey`) with no Gin/GORM/Xray imports.
+2. Credentials are stored in the `pia` setting. Signing in exchanges a
+   username/password for a token; the password is not stored. Logout
+   clears the token only.
+3. Adding a server generates a WireGuard key, registers it via `/addKey`,
+   and appends a peer (`tag` `pia-<region>-<server>`). The same hostname
+   cannot be added twice; a second `/addKey` to that endpoint can invalidate
+   the previous peer. Per-row Reset re-registers that hostname in place.
+4. Peer `allowedIPs` is IPv4-only (`0.0.0.0/0`). Keepalive is 25s.
+
+The earlier database-managed multi-egress model (profiles, catalog
+snapshots, secretbox, runtime injection) is removed.
 
 ## Consequences
 
-- Nord/WARP/template outbounds are unchanged.
-- Deleting or disabling a referenced PIA tag is rejected until the admin
-  replaces the references. Apply failure keeps the running Xray process
-  because `GetXrayConfig` errors before `RestartXray` stops it.
+- WARP/Nord stay unchanged (Nord remains a singleton with a global Reset).
+- Delete a PIA outbound from **Xray → Outbounds** (routing cleanup). Reset
+  in the PIA modal only renews the WireGuard key.
+- PIA does not document a key-list API. Community reports suggest an
+  unofficial ~150 concurrent-key cap and idle expiry.

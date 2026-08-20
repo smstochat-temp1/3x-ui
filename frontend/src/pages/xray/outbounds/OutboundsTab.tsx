@@ -55,7 +55,6 @@ import { originalOutboundIndex } from './outbounds-tab-helpers';
 import { useOutboundColumns } from './useOutboundColumns';
 import OutboundCardList from './OutboundCardList';
 import SubscriptionOutbounds from './SubscriptionOutbounds';
-import PiaOutbounds from './PiaOutbounds';
 
 interface OutboundSub {
   id: number;
@@ -83,8 +82,6 @@ interface OutboundsTabProps {
   inboundTags: string[];
   subscriptionOutbounds?: unknown[];
   subscriptionOutboundTags?: string[];
-  piaOutbounds?: unknown[];
-  piaOutboundTags?: string[];
   isMobile: boolean;
   onResetTraffic: (tag: string) => void;
   onTest: (index: number, mode: string) => void;
@@ -106,8 +103,6 @@ export default function OutboundsTab({
   inboundTags: _inboundTags,
   subscriptionOutbounds,
   subscriptionOutboundTags,
-  piaOutbounds,
-  piaOutboundTags,
   isMobile,
   onResetTraffic,
   onTest,
@@ -173,11 +168,8 @@ export default function OutboundsTab({
     for (const tag of subscriptionOutboundTags || []) {
       if (tag) tags.add(tag);
     }
-    for (const tag of piaOutboundTags || []) {
-      if (tag) tags.add(tag);
-    }
     return [...tags];
-  }, [templateSettings?.outbounds, editingIndex, subscriptionOutboundTags, piaOutboundTags]);
+  }, [templateSettings?.outbounds, editingIndex, subscriptionOutboundTags]);
 
   const mutate = useCallback(
     (mutator: (next: XraySettingsValue) => void) => {
@@ -196,7 +188,6 @@ export default function OutboundsTab({
     setEditingIndex(null);
     setExistingTags([
       ...(templateSettings?.outbounds || []).map((o) => o?.tag),
-      ...(piaOutboundTags ?? []),
     ].filter((tg): tg is string => !!tg));
     setModalOpen(true);
   }
@@ -214,7 +205,6 @@ export default function OutboundsTab({
         ...(templateSettings?.outbounds || [])
           .filter((_, i) => i !== target)
           .map((o) => o?.tag),
-        ...(piaOutboundTags ?? []),
       ]
         .filter((tg): tg is string => !!tg),
     );
@@ -610,9 +600,6 @@ export default function OutboundsTab({
             isMobile={isMobile}
             onTestSubscription={onTestSubscription}
           />
-        )}
-        {Array.isArray(piaOutbounds) && piaOutbounds.length > 0 && (
-          <PiaOutbounds piaOutbounds={piaOutbounds} onOpenManager={onShowPia} />
         )}
       </Space>
 

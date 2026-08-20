@@ -84,10 +84,6 @@ func allModels() []any {
 		&model.NodeClientIp{},
 		&model.ClientGlobalTraffic{},
 		&model.OutboundSubscription{},
-		&model.PiaProfile{},
-		&model.PiaEgress{},
-		&model.PiaBinding{},
-		&model.PiaCatalogSnapshot{},
 	}
 }
 
@@ -127,6 +123,9 @@ func initModels() error {
 		return err
 	}
 	if err := migrateApiTokenScopeAndExpiry(); err != nil {
+		return err
+	}
+	if err := dropPiaManagedTables(); err != nil {
 		return err
 	}
 	if err := dropLegacyForeignKeys(); err != nil {
@@ -191,6 +190,18 @@ func postgresModelSettled(mdl any) bool {
 		}
 	}
 	return true
+}
+
+func dropPiaManagedTables() error {
+	for _, name := range []string{"pia_bindings", "pia_egresses", "pia_profiles", "pia_catalog_snapshots"} {
+		if !db.Migrator().HasTable(name) {
+			continue
+		}
+		if err := db.Migrator().DropTable(name); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func dropLegacyForeignKeys() error {

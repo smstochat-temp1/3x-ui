@@ -60,10 +60,6 @@ icon: Variable
 | ------------------------ | ------- | --------------------- |
 | `XRAY_VMESS_AEAD_FORCED` | `false` | 强制启用 VMess AEAD。 |
 
-## PIA 受管出口
-
-写入 PIA token 或 WireGuard 私钥前，将 `NODE_TOKEN_ENCRYPTION` 设置为 `migration` 或 `required`。同时配置一种密钥来源：权限为 `0600` 的密钥文件，或 `XUI_NODE_TOKEN_KEY`。数据库备份只有使用原始加密密钥材料才能解密。参见 [出站与路由](/zh/docs/operations/outbounds-routing)。
-
 ## 隧道健康监测器
 
 可选的看门狗：它探测一个 URL（可选择**经由**本地 Xray 入站进行），并在反复

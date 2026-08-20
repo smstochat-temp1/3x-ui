@@ -61,10 +61,6 @@ knobs — leave them unset unless you're tuning a constrained host.
 | ------------------------ | ------- | --------------------- |
 | `XRAY_VMESS_AEAD_FORCED` | `false` | Force VMess AEAD.     |
 
-## PIA managed egress
-
-Before storing a PIA token or WireGuard private key, set `NODE_TOKEN_ENCRYPTION` to `migration` or `required`. Also configure a key source: either a keyring file with mode `0600` or `XUI_NODE_TOKEN_KEY`. A backup can be decrypted only with the original encryption key material. The environment source always encrypts with key id `env`; when moving to a keyring file, include an `env` entry with the same key bytes so existing ciphertext remains readable. See [Outbounds & Routing](/docs/operations/outbounds-routing).
-
 ## Tunnel health monitor
 
 Optional watchdog: it probes a URL (optionally **through** a local Xray inbound)

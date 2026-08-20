@@ -15,8 +15,6 @@ function xrayPayload(overrides: Record<string, unknown> = {}) {
     outboundTestUrl: 'https://test.example',
     subscriptionOutbounds: [],
     subscriptionOutboundTags: [],
-    piaOutbounds: [],
-    piaOutboundTags: [],
     ...overrides,
   };
 }
@@ -68,25 +66,5 @@ describe('useXraySetting', () => {
 
     expect(result.current.outboundTestUrl).toBe('');
     expect(result.current.saveDisabled).toBe(true);
-  });
-
-  it('exposes PIA outbound tags from the xray config payload', async () => {
-    const payload = xrayPayload({
-      piaOutbounds: [{ uid: 'e1', tag: 'pia-abcd1234', region: 'US East', status: 'ready' }],
-      piaOutboundTags: ['pia-abcd1234'],
-    });
-    vi.spyOn(HttpUtil, 'post').mockImplementation(async (url) => {
-      if (url === '/panel/api/xray/') return new Msg(true, '', JSON.stringify(payload));
-      return new Msg(true, '');
-    });
-    const queryClient = makeTestQueryClient();
-    const wrapper = ({ children }: { children: ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-    const { result } = renderHook(() => useXraySetting(), { wrapper });
-
-    await waitFor(() => expect(result.current.fetched).toBe(true));
-    expect(result.current.piaOutboundTags).toEqual(['pia-abcd1234']);
-    expect(result.current.piaOutbounds).toEqual(payload.piaOutbounds);
   });
 });

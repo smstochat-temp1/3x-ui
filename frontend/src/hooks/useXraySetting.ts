@@ -63,8 +63,6 @@ export interface UseXraySettingResult {
   clientReverseTags: string[];
   subscriptionOutbounds: unknown[];
   subscriptionOutboundTags: string[];
-  piaOutbounds: unknown[];
-  piaOutboundTags: string[];
   outboundsTraffic: OutboundTrafficRow[];
   outboundTestStates: Record<number, OutboundTestState>;
   subscriptionTestStates: Record<string, OutboundTestState>;
@@ -139,8 +137,6 @@ export function useXraySetting(): UseXraySettingResult {
   const [clientReverseTags, setClientReverseTags] = useState<string[]>([]);
   const [subscriptionOutbounds, setSubscriptionOutbounds] = useState<unknown[]>([]);
   const [subscriptionOutboundTags, setSubscriptionOutboundTags] = useState<string[]>([]);
-  const [piaOutbounds, setPiaOutbounds] = useState<unknown[]>([]);
-  const [piaOutboundTags, setPiaOutboundTags] = useState<string[]>([]);
   const [outboundTestStates, setOutboundTestStates] = useState<Record<number, OutboundTestState>>({});
   // Subscription outbounds aren't in templateSettings.outbounds, so their test
   // results are keyed by tag rather than by index.
@@ -171,8 +167,6 @@ export function useXraySetting(): UseXraySettingResult {
     setClientReverseTags(obj.clientReverseTags || []);
     setSubscriptionOutbounds(obj.subscriptionOutbounds || []);
     setSubscriptionOutboundTags(obj.subscriptionOutboundTags || []);
-    setPiaOutbounds(obj.piaOutbounds || []);
-    setPiaOutboundTags(obj.piaOutboundTags || []);
     const isDirty = savedXraySettingRef.current !== xraySettingRef.current
       || savedOutboundTestUrlRef.current !== normalizeOutboundTestUrl(outboundTestUrlRef.current);
     if (isDirty) return;
@@ -457,8 +451,6 @@ export function useXraySetting(): UseXraySettingResult {
       clientReverseTags,
       subscriptionOutbounds,
       subscriptionOutboundTags,
-      piaOutbounds,
-      piaOutboundTags,
       outboundsTraffic,
       outboundTestStates,
       subscriptionTestStates,
@@ -487,8 +479,6 @@ export function useXraySetting(): UseXraySettingResult {
       clientReverseTags,
       subscriptionOutbounds,
       subscriptionOutboundTags,
-      piaOutbounds,
-      piaOutboundTags,
       outboundsTraffic,
       outboundTestStates,
       subscriptionTestStates,
