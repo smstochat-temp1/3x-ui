@@ -48,6 +48,14 @@ function mapType(t) {
   return 'string';
 }
 
+function mapSchema(t) {
+  const value = String(t || '').toLowerCase();
+  if (value === 'integer[]') return { type: 'array', items: { type: 'integer' } };
+  if (value === 'object[]') return { type: 'array', items: { type: 'object' } };
+  if (value === 'array') return { type: 'array', items: {} };
+  return { type: mapType(value) };
+}
+
 function tryParseJson(raw) {
   if (typeof raw !== 'string') return undefined;
   try {
@@ -63,13 +71,13 @@ function paramToOpenApi(p) {
     in: p.in,
     required: p.in === 'path' ? true : !p.optional,
     description: p.desc || '',
-    schema: { type: mapType(p.type) },
+    schema: mapSchema(p.type),
   };
   if (p.defaultValue !== undefined) out.schema.default = p.defaultValue;
   return out;
 }
 
-function buildOperation(ep, tag) {
+function buildOperation(ep, tag, errorSchema) {
   const op = {
     tags: [tag],
     summary: ep.summary || '',
@@ -81,7 +89,7 @@ function buildOperation(ep, tag) {
   const params = [];
   const bodyParams = [];
   for (const p of ep.params || []) {
-    if (p.in === 'body') {
+    if (p.in === 'body' || p.in === 'body (json)') {
       bodyParams.push(p);
     } else if (p.in === 'path' || p.in === 'query' || p.in === 'header') {
       params.push(paramToOpenApi(p));
@@ -109,7 +117,7 @@ function buildOperation(ep, tag) {
     const required = [];
     for (const bp of bodyParams) {
       properties[bp.name] = {
-        type: mapType(bp.type),
+        ...mapSchema(bp.type),
         description: bp.desc || '',
       };
       if (!bp.optional) required.push(bp.name);
@@ -146,18 +154,49 @@ function buildOperation(ep, tag) {
       successExample = { success: true, obj: ep.responseSchemaArray ? [obj] : obj };
     }
   }
+  const successSchema = {
+    type: 'object',
+    properties: {
+      success: { type: 'boolean', enum: [true] },
+      msg: { type: 'string' },
+      obj: objSchema,
+    },
+    required: ['success', 'msg', 'obj'],
+  };
+  if (successExample && typeof successExample === 'object' && !Array.isArray(successExample)) {
+    successExample = { success: true, msg: '', obj: null, ...successExample };
+  }
+  let responseSchema = successSchema;
+  if (errorSchema) {
+    if (SCHEMAS[errorSchema] === undefined) {
+      throw new Error(`${ep.method} ${ep.path}: errorSchema "${errorSchema}" has no generated schema`);
+    }
+    responseSchema = {
+      oneOf: [
+        successSchema,
+        {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', enum: [false] },
+            msg: { type: 'string' },
+            obj: {
+              type: 'object',
+              properties: {
+                error: { $ref: `#/components/schemas/${errorSchema}` },
+              },
+              required: ['error'],
+            },
+          },
+          required: ['success', 'msg', 'obj'],
+        },
+      ],
+    };
+  }
   responses['200'] = {
     description: 'Successful response',
     content: {
       'application/json': {
-        schema: {
-          type: 'object',
-          properties: {
-            success: { type: 'boolean' },
-            msg: { type: 'string' },
-            obj: objSchema,
-          },
-        },
+        schema: responseSchema,
         ...(successExample !== undefined ? { example: successExample } : {}),
       },
     },
@@ -194,7 +233,7 @@ function buildSpec() {
     for (const ep of section.endpoints) {
       const openApiPath = ginPathToOpenApi(ep.path);
       if (!paths[openApiPath]) paths[openApiPath] = {};
-      paths[openApiPath][ep.method.toLowerCase()] = buildOperation(ep, tag);
+      paths[openApiPath][ep.method.toLowerCase()] = buildOperation(ep, tag, section.errorSchema);
     }
   }
 

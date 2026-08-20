@@ -55,6 +55,7 @@ import { originalOutboundIndex } from './outbounds-tab-helpers';
 import { useOutboundColumns } from './useOutboundColumns';
 import OutboundCardList from './OutboundCardList';
 import SubscriptionOutbounds from './SubscriptionOutbounds';
+import PiaOutbounds from './PiaOutbounds';
 
 interface OutboundSub {
   id: number;
@@ -82,6 +83,8 @@ interface OutboundsTabProps {
   inboundTags: string[];
   subscriptionOutbounds?: unknown[];
   subscriptionOutboundTags?: string[];
+  piaOutbounds?: unknown[];
+  piaOutboundTags?: string[];
   isMobile: boolean;
   onResetTraffic: (tag: string) => void;
   onTest: (index: number, mode: string) => void;
@@ -89,6 +92,7 @@ interface OutboundsTabProps {
   onTestAll: (mode: string) => void;
   onShowWarp: () => void;
   onShowNord: () => void;
+  onShowPia: () => void;
   onRefreshXrayData?: () => void;
 }
 
@@ -102,6 +106,8 @@ export default function OutboundsTab({
   inboundTags: _inboundTags,
   subscriptionOutbounds,
   subscriptionOutboundTags,
+  piaOutbounds,
+  piaOutboundTags,
   isMobile,
   onResetTraffic,
   onTest,
@@ -109,6 +115,7 @@ export default function OutboundsTab({
   onTestAll,
   onShowWarp,
   onShowNord,
+  onShowPia,
   onRefreshXrayData,
 }: OutboundsTabProps) {
   const { t } = useTranslation();
@@ -166,8 +173,11 @@ export default function OutboundsTab({
     for (const tag of subscriptionOutboundTags || []) {
       if (tag) tags.add(tag);
     }
+    for (const tag of piaOutboundTags || []) {
+      if (tag) tags.add(tag);
+    }
     return [...tags];
-  }, [templateSettings?.outbounds, editingIndex, subscriptionOutboundTags]);
+  }, [templateSettings?.outbounds, editingIndex, subscriptionOutboundTags, piaOutboundTags]);
 
   const mutate = useCallback(
     (mutator: (next: XraySettingsValue) => void) => {
@@ -184,7 +194,10 @@ export default function OutboundsTab({
   function openAdd() {
     setEditingOutbound(null);
     setEditingIndex(null);
-    setExistingTags((templateSettings?.outbounds || []).map((o) => o?.tag).filter((tg): tg is string => !!tg));
+    setExistingTags([
+      ...(templateSettings?.outbounds || []).map((o) => o?.tag),
+      ...(piaOutboundTags ?? []),
+    ].filter((tg): tg is string => !!tg));
     setModalOpen(true);
   }
 
@@ -197,9 +210,12 @@ export default function OutboundsTab({
     setEditingOutbound((templateSettings?.outbounds || [])[target] as Record<string, unknown>);
     setEditingIndex(target);
     setExistingTags(
-      (templateSettings?.outbounds || [])
-        .filter((_, i) => i !== target)
-        .map((o) => o?.tag)
+      [
+        ...(templateSettings?.outbounds || [])
+          .filter((_, i) => i !== target)
+          .map((o) => o?.tag),
+        ...(piaOutboundTags ?? []),
+      ]
         .filter((tg): tg is string => !!tg),
     );
     setModalOpen(true);
@@ -492,6 +508,7 @@ export default function OutboundsTab({
                   items: [
                     { key: 'warp', icon: <CloudOutlined />, label: 'WARP', onClick: onShowWarp },
                     { key: 'nord', icon: <ApiOutlined />, label: 'NordVPN', onClick: onShowNord },
+                    { key: 'pia', icon: <ApiOutlined />, label: t('pages.xray.pia.menu'), onClick: onShowPia },
                     { type: 'divider' },
                     { key: 'import', icon: <ImportOutlined />, label: t('pages.xray.importOutbounds'), onClick: () => setImportOpen(true) },
                     { key: 'export', icon: <ExportOutlined />, label: t('pages.xray.exportOutbounds'), disabled: outbounds.length === 0, onClick: exportOutbounds },
@@ -593,6 +610,9 @@ export default function OutboundsTab({
             isMobile={isMobile}
             onTestSubscription={onTestSubscription}
           />
+        )}
+        {Array.isArray(piaOutbounds) && piaOutbounds.length > 0 && (
+          <PiaOutbounds piaOutbounds={piaOutbounds} onOpenManager={onShowPia} />
         )}
       </Space>
 

@@ -45,6 +45,8 @@ export const XrayConfigPayloadSchema = z.object({
   // balancers / routing rules.
   subscriptionOutbounds: z.array(z.unknown()).optional(),
   subscriptionOutboundTags: z.array(z.string()).optional(),
+  piaOutbounds: z.array(z.unknown()).optional(),
+  piaOutboundTags: z.array(z.string()).optional(),
 }).loose();
 
 export const OutboundTrafficRowSchema = z.object({

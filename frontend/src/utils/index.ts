@@ -105,6 +105,22 @@ export class HttpUtil {
     }
   }
 
+  static async patch<T = unknown>(url: string, data?: unknown, options: HttpOptions = {}): Promise<Msg<T>> {
+    const { silent, silentSuccess, ...rest } = options;
+    try {
+      const resp = await httpRequest('PATCH', url, data, rest);
+      const msg = this._respToMsg(resp) as Msg<T>;
+      if (!silent) this._handleMsg(msg, silentSuccess);
+      return msg;
+    } catch (error) {
+      const err = error as { response?: { data?: { msg?: string; message?: string } }; message?: string };
+      const data = err.response?.data;
+      const errorMsg = new Msg<T>(false, data?.msg || data?.message || err.message || 'Request failed');
+      if (!silent) this._handleMsg(errorMsg);
+      return errorMsg;
+    }
+  }
+
   static async delete<T = unknown>(url: string, options: HttpOptions = {}): Promise<Msg<T>> {
     const { silent, silentSuccess, ...rest } = options;
     try {

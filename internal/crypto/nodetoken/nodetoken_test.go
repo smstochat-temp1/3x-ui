@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -183,10 +184,16 @@ func TestParseMode(t *testing.T) {
 }
 
 func TestFileKeySourceRejectsLoosePerms(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("unix file modes are not enforced on windows")
+	}
 	dir := t.TempDir()
 	p := filepath.Join(dir, "k.json")
 	key := make([]byte, keyLen)
-	body, _ := json.Marshal(keyFile{Active: "k1", Keys: map[string]string{"k1": base64.StdEncoding.EncodeToString(key)}})
+	body, _ := json.Marshal(struct {
+		Active string            `json:"active"`
+		Keys   map[string]string `json:"keys"`
+	}{Active: "k1", Keys: map[string]string{"k1": base64.StdEncoding.EncodeToString(key)}})
 	if err := os.WriteFile(p, body, 0o644); err != nil {
 		t.Fatal(err)
 	}

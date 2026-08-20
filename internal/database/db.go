@@ -84,6 +84,10 @@ func allModels() []any {
 		&model.NodeClientIp{},
 		&model.ClientGlobalTraffic{},
 		&model.OutboundSubscription{},
+		&model.PiaProfile{},
+		&model.PiaEgress{},
+		&model.PiaBinding{},
+		&model.PiaCatalogSnapshot{},
 	}
 }
 

@@ -34,6 +34,15 @@ export const keys = {
     lastOnline: () => ['clients', 'lastOnline'] as const,
     groups: () => ['clients', 'groups'] as const,
   },
+  pia: {
+    root: () => ['pia'] as const,
+    status: () => ['pia', 'status'] as const,
+    profiles: () => ['pia', 'profiles'] as const,
+    egresses: () => ['pia', 'egresses'] as const,
+    catalog: () => ['pia', 'catalog'] as const,
+    regions: () => ['pia', 'regions'] as const,
+    servers: (regionId: string) => ['pia', 'servers', regionId] as const,
+  },
   xray: {
     root: () => ['xray'] as const,
     config: () => ['xray', 'config'] as const,

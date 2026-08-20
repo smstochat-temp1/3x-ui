@@ -643,6 +643,97 @@ export interface PanelUpdateStatus {
   state: string;
 }
 
+export interface PiaBindingView {
+  active: boolean;
+  generation: number;
+  peerIp: string;
+  publicKey: string;
+  serverHostname: string;
+  serverIp: string;
+  serverPort: number;
+  uid: string;
+}
+
+export interface PiaCatalogStatusView {
+  fetchedAt: number;
+  fresh: boolean;
+  lastErrorCode: string;
+  lastErrorMessage: string;
+  payloadSha256: string;
+  regionCount: number;
+  serverCount: number;
+  signatureVerified: boolean;
+}
+
+export interface PiaDependencyView {
+  field: string;
+  kind: string;
+  label: string;
+}
+
+export interface PiaEgressView {
+  binding?: PiaBindingView | null;
+  enabled: boolean;
+  generation: number;
+  hasActiveBinding: boolean;
+  ipv6Policy: string;
+  keepaliveSeconds: number;
+  lastErrorCode: string;
+  lastErrorMessage: string;
+  lastExternalIp: string;
+  lastLatencyMs: number;
+  mtu: number;
+  name: string;
+  outboundTag: string;
+  peerIp: string;
+  profileUid: string;
+  publicKey: string;
+  regionId: string;
+  regionName: string;
+  serverHostname: string;
+  serverIp: string;
+  status: string;
+  uid: string;
+}
+
+export interface PiaErrorInfo {
+  code: string;
+  details?: unknown;
+  operationId?: string;
+  retryable: boolean;
+}
+
+export interface PiaProfileView {
+  accountHint: string;
+  authStatus: string;
+  enabled: boolean;
+  hasToken: boolean;
+  lastAuthErrorCode: string;
+  lastAuthErrorMessage: string;
+  lastAuthenticatedAt: number;
+  name: string;
+  revision: number;
+  tokenExpiresAt: number;
+  uid: string;
+}
+
+export interface PiaRegionView {
+  countryCode: string;
+  id: string;
+  name: string;
+  serverCount: number;
+}
+
+export interface PiaServerView {
+  hostname: string;
+  ip: string;
+}
+
+export interface PiaStatusView {
+  encryptionMode: string;
+  secretboxReady: boolean;
+}
+
 export interface ProbeResultUI {
   cpuPct: number;
   error: string;

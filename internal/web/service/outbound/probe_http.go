@@ -108,11 +108,15 @@ func probeModeLabel(mode string) string {
 // through a temp xray instance (UDP-transport outbounds are always forced to
 // the HTTP probe — a raw dial can't measure them).
 func (s *OutboundService) TestOutbound(outboundJSON string, testURL string, allOutboundsJSON string, mode string) (*TestOutboundResult, error) {
+	return s.TestOutboundContext(context.Background(), outboundJSON, testURL, allOutboundsJSON, mode)
+}
+
+func (s *OutboundService) TestOutboundContext(ctx context.Context, outboundJSON string, testURL string, allOutboundsJSON string, mode string) (*TestOutboundResult, error) {
 	var ob map[string]any
 	if err := json.Unmarshal([]byte(outboundJSON), &ob); err != nil {
 		return &TestOutboundResult{Mode: probeModeLabel(mode), Success: false, Error: fmt.Sprintf("Invalid outbound JSON: %v", err)}, nil
 	}
-	results := s.testOutboundsParsed([]map[string]any{ob}, testURL, allOutboundsJSON, mode)
+	results := s.testOutboundsParsed(ctx, []map[string]any{ob}, testURL, allOutboundsJSON, mode)
 	return results[0], nil
 }
 
@@ -135,13 +139,13 @@ func (s *OutboundService) TestOutbounds(outboundsJSON string, testURL string, al
 			items[i] = ob
 		}
 	}
-	return s.testOutboundsParsed(items, testURL, allOutboundsJSON, mode), nil
+	return s.testOutboundsParsed(context.Background(), items, testURL, allOutboundsJSON, mode), nil
 }
 
 // testOutboundsParsed splits items into the TCP lane (direct dials, bounded
 // worker pool) and the HTTP lane (one shared temp xray instance), runs both,
 // and returns results aligned with items. A nil item marks unparseable input.
-func (s *OutboundService) testOutboundsParsed(items []map[string]any, testURL string, allOutboundsJSON string, mode string) []*TestOutboundResult {
+func (s *OutboundService) testOutboundsParsed(ctx context.Context, items []map[string]any, testURL string, allOutboundsJSON string, mode string) []*TestOutboundResult {
 	results := make([]*TestOutboundResult, len(items))
 
 	modeLabel := probeModeLabel(mode)
@@ -247,7 +251,7 @@ func (s *OutboundService) testOutboundsParsed(items []map[string]any, testURL st
 	}
 	defer httpTestSemaphore.Unlock()
 
-	retryPerItem, err := runHTTPProbeBatch(httpItems, allOutbounds, testURL, realDelay)
+	retryPerItem, err := runHTTPProbeBatch(ctx, httpItems, allOutbounds, testURL, realDelay)
 	if err == nil {
 		return results
 	}
@@ -260,7 +264,7 @@ func (s *OutboundService) testOutboundsParsed(items []map[string]any, testURL st
 	// instance so the broken outbound reports xray's real error and the
 	// rest still get tested. Serial: the poisoned case fails fast (~1s).
 	for _, it := range httpItems {
-		if _, ferr := runHTTPProbeBatch([]*httpBatchItem{it}, allOutbounds, testURL, realDelay); ferr != nil {
+		if _, ferr := runHTTPProbeBatch(ctx, []*httpBatchItem{it}, allOutbounds, testURL, realDelay); ferr != nil {
 			it.result.Success = false
 			it.result.Error = ferr.Error()
 		}
@@ -274,8 +278,8 @@ func (s *OutboundService) testOutboundsParsed(items []map[string]any, testURL st
 // whether splitting the batch into per-item instances could help (true for
 // start failures / early exits that a poisoned config would explain, false
 // for environmental failures like a missing binary or no free ports).
-func runHTTPProbeBatch(items []*httpBatchItem, allOutbounds []any, testURL string, realDelay bool) (retryPerItem bool, err error) {
-	ports, release, err := reserveLoopbackPorts(len(items))
+func runHTTPProbeBatch(ctx context.Context, items []*httpBatchItem, allOutbounds []any, testURL string, realDelay bool) (retryPerItem bool, err error) {
+	ports, release, err := reserveLoopbackPorts(ctx, len(items))
 	if err != nil {
 		return false, fmt.Errorf("Failed to reserve test ports: %w", err)
 	}
@@ -308,7 +312,7 @@ func runHTTPProbeBatch(items []*httpBatchItem, allOutbounds []any, testURL strin
 		return true, fmt.Errorf("Failed to start test xray instance: %w", err)
 	}
 
-	if err := waitForPortsReady(proc, ports, batchPortsReadyTimeout); err != nil {
+	if err := waitForPortsReady(ctx, proc, ports, batchPortsReadyTimeout); err != nil {
 		return err.exited, err
 	}
 
@@ -320,7 +324,7 @@ func runHTTPProbeBatch(items []*httpBatchItem, allOutbounds []any, testURL strin
 			defer wg.Done()
 			sem <- struct{}{}
 			defer func() { <-sem }()
-			probeThroughSocks(port, testURL, httpProbeTimeout, realDelay, it.result)
+			probeThroughSocks(ctx, port, testURL, httpProbeTimeout, realDelay, it.result)
 		}(items[i], ports[i])
 	}
 	wg.Wait()
@@ -347,14 +351,14 @@ func (e *portsReadyError) Error() string { return e.msg }
 
 // waitForPortsReady polls until every test inbound accepts connections,
 // aborting as soon as the process exits.
-func waitForPortsReady(proc batchProcess, ports []int, timeout time.Duration) *portsReadyError {
+func waitForPortsReady(ctx context.Context, proc batchProcess, ports []int, timeout time.Duration) *portsReadyError {
 	deadline := time.Now().Add(timeout)
 	for _, port := range ports {
 		for {
 			if !proc.IsRunning() {
 				return &portsReadyError{msg: "Xray process exited: " + proc.GetResult(), exited: true}
 			}
-			conn, err := (&net.Dialer{Timeout: 100 * time.Millisecond}).DialContext(context.Background(), "tcp", fmt.Sprintf("127.0.0.1:%d", port))
+			conn, err := (&net.Dialer{Timeout: 100 * time.Millisecond}).DialContext(ctx, "tcp", fmt.Sprintf("127.0.0.1:%d", port))
 			if err == nil {
 				conn.Close()
 				break
@@ -362,7 +366,11 @@ func waitForPortsReady(proc batchProcess, ports []int, timeout time.Duration) *p
 			if time.Now().After(deadline) {
 				return &portsReadyError{msg: fmt.Sprintf("Xray failed to open test inbounds: port %d not ready after %v", port, timeout)}
 			}
-			time.Sleep(50 * time.Millisecond)
+			select {
+			case <-ctx.Done():
+				return &portsReadyError{msg: ctx.Err().Error()}
+			case <-time.After(50 * time.Millisecond):
+			}
 		}
 	}
 	return nil
@@ -460,7 +468,7 @@ func outboundsContainTag(outbounds []any, tag string) bool {
 // the established tunnel — falling back to the cold total if the warm request
 // fails. The test URL's hostname is resolved by xray (Go's SOCKS5 client
 // sends the domain to the proxy), so DNS goes through the outbound too.
-func probeThroughSocks(port int, testURL string, timeout time.Duration, realDelay bool, result *TestOutboundResult) {
+func probeThroughSocks(ctx context.Context, port int, testURL string, timeout time.Duration, realDelay bool, result *TestOutboundResult) {
 	proxyURL := &url.URL{Scheme: "socks5", Host: net.JoinHostPort("127.0.0.1", strconv.Itoa(port))}
 	tr := &http.Transport{
 		Proxy:               http.ProxyURL(proxyURL),
@@ -518,7 +526,7 @@ func probeThroughSocks(port int, testURL string, timeout time.Duration, realDela
 		},
 	}
 
-	req, err := http.NewRequestWithContext(httptrace.WithClientTrace(context.Background(), trace), http.MethodGet, testURL, nil)
+	req, err := http.NewRequestWithContext(httptrace.WithClientTrace(ctx, trace), http.MethodGet, testURL, nil)
 	if err != nil {
 		result.Error = err.Error()
 		return
@@ -545,13 +553,13 @@ func probeThroughSocks(port int, testURL string, timeout time.Duration, realDela
 
 	delay := coldDelay
 	if !realDelay {
-		if warmDelay, ok := timedWarmGet(client, testURL); ok {
+		if warmDelay, ok := timedWarmGet(ctx, client, testURL); ok {
 			delay = warmDelay
 		}
 	}
 	result.Delay = max(delay, 1)
 	if !realDelay {
-		result.Egress = egressTraceProbe(proxyURL)
+		result.Egress = egressTraceProbe(ctx, proxyURL)
 	}
 }
 
@@ -560,8 +568,8 @@ func probeThroughSocks(port int, testURL string, timeout time.Duration, realDela
 // Cloudflare address directly, when available, while keeping the TLS SNI as
 // cloudflare.com. Failures are intentionally ignored by the caller: egress
 // metadata is diagnostic, not reachability.
-func probeEgressTrace(proxyURL *url.URL) *TestEgressResult {
-	ipv4, ipv6 := cloudflareTraceTargets()
+func probeEgressTrace(ctx context.Context, proxyURL *url.URL) *TestEgressResult {
+	ipv4, ipv6 := cloudflareTraceTargets(ctx)
 	if ipv4 == nil && ipv6 == nil {
 		return nil
 	}
@@ -590,7 +598,7 @@ func probeEgressTrace(proxyURL *url.URL) *TestEgressResult {
 	results := make(chan map[string]string, len(targets))
 	for _, target := range targets {
 		go func(ip net.IP) {
-			results <- fetchCloudflareTrace(client, ip)
+			results <- fetchCloudflareTrace(ctx, client, ip)
 		}(target)
 	}
 	for range targets {
@@ -603,8 +611,8 @@ func probeEgressTrace(proxyURL *url.URL) *TestEgressResult {
 	return egress
 }
 
-func cloudflareTraceTargets() (net.IP, net.IP) {
-	ctx, cancel := context.WithTimeout(context.Background(), egressTraceTimeout)
+func cloudflareTraceTargets(ctx context.Context) (net.IP, net.IP) {
+	ctx, cancel := context.WithTimeout(ctx, egressTraceTimeout)
 	defer cancel()
 
 	addrs, err := net.DefaultResolver.LookupIPAddr(ctx, egressTraceHost)
@@ -630,7 +638,7 @@ func cloudflareTraceTargets() (net.IP, net.IP) {
 	return ipv4, ipv6
 }
 
-func fetchCloudflareTrace(client *http.Client, ip net.IP) map[string]string {
+func fetchCloudflareTrace(ctx context.Context, client *http.Client, ip net.IP) map[string]string {
 	if ip == nil {
 		return nil
 	}
@@ -639,7 +647,7 @@ func fetchCloudflareTrace(client *http.Client, ip net.IP) map[string]string {
 		Host:   net.JoinHostPort(ip.String(), "443"),
 		Path:   egressTracePath,
 	}).String()
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, traceURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, traceURL, nil)
 	if err != nil {
 		return nil
 	}
@@ -698,8 +706,8 @@ func parseCloudflareTrace(body string) map[string]string {
 
 // timedWarmGet re-issues the probe request over the transport's kept-alive
 // connection and returns its duration — the tunnel's per-request round-trip.
-func timedWarmGet(client *http.Client, testURL string) (int64, bool) {
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, testURL, nil)
+func timedWarmGet(ctx context.Context, client *http.Client, testURL string) (int64, bool) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 	if err != nil {
 		return 0, false
 	}
@@ -723,7 +731,7 @@ func drainAndClose(resp *http.Response) {
 // reserveLoopbackPorts grabs n free loopback ports and keeps the listeners
 // open so nothing else claims them; release() frees them (idempotent — the
 // caller releases right before starting xray and again via defer).
-func reserveLoopbackPorts(n int) ([]int, func(), error) {
+func reserveLoopbackPorts(ctx context.Context, n int) ([]int, func(), error) {
 	listeners := make([]net.Listener, 0, n)
 	release := func() {
 		for _, l := range listeners {
@@ -732,7 +740,7 @@ func reserveLoopbackPorts(n int) ([]int, func(), error) {
 	}
 	ports := make([]int, 0, n)
 	for range n {
-		l, err := (&net.ListenConfig{}).Listen(context.Background(), "tcp", "127.0.0.1:0")
+		l, err := (&net.ListenConfig{}).Listen(ctx, "tcp", "127.0.0.1:0")
 		if err != nil {
 			release()
 			return nil, nil, err

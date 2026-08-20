@@ -1,0 +1,153 @@
+---
+title: PIA managed egress
+description: Database-managed Private Internet Access WireGuard outbounds.
+  Node-token encryption is required before credentials or private keys can be
+  stored. Secrets (password, token, private key) never appear in responses.
+  Admin session or admin API token only.
+full: true
+_openapi:
+  preload:
+    - ./public/openapi.json
+  toc:
+    - depth: 2
+      title: Report whether the secretbox keyring is ready for PIA secrets.
+      url: '#report-whether-the-secretbox-keyring-is-ready-for-pia-secrets'
+    - depth: 2
+      title: List PIA account profiles (no token material).
+      url: '#list-pia-account-profiles-no-token-material'
+    - depth: 2
+      title: Create a PIA account profile.
+      url: '#create-a-pia-account-profile'
+    - depth: 2
+      title: Exchange a PIA username and password for a token. The password is not
+        stored.
+      url: '#exchange-a-pia-username-and-password-for-a-token-the-password-is-not-stored'
+    - depth: 2
+      title: Rename or enable/disable a PIA profile.
+      url: '#rename-or-enabledisable-a-pia-profile'
+    - depth: 2
+      title: Delete a PIA profile and its egresses. Fails with pia_dependency_conflict
+        when outbound tags are still referenced.
+      url: '#delete-a-pia-profile-and-its-egresses-fails-with-pia_dependency_conflict-when-outbound-tags-are-still-referenced'
+    - depth: 2
+      title: Show freshness of the last signature-verified PIA server list.
+      url: '#show-freshness-of-the-last-signature-verified-pia-server-list'
+    - depth: 2
+      title: Fetch and signature-verify the PIA server list.
+      url: '#fetch-and-signature-verify-the-pia-server-list'
+    - depth: 2
+      title: List PIA regions from the verified catalog.
+      url: '#list-pia-regions-from-the-verified-catalog'
+    - depth: 2
+      title: List WireGuard servers in a PIA region.
+      url: '#list-wireguard-servers-in-a-pia-region'
+    - depth: 2
+      title: List managed PIA outbounds (no private keys).
+      url: '#list-managed-pia-outbounds-no-private-keys'
+    - depth: 2
+      title: Create a PIA outbound with an immutable tag.
+      url: '#create-a-pia-outbound-with-an-immutable-tag'
+    - depth: 2
+      title: Get one managed PIA outbound.
+      url: '#get-one-managed-pia-outbound'
+    - depth: 2
+      title: Update display name or tunnel options. The outbound tag is immutable.
+      url: '#update-display-name-or-tunnel-options-the-outbound-tag-is-immutable'
+    - depth: 2
+      title: Delete a PIA outbound. Requires replacementTag or deleteRules when
+        routing still references the tag.
+      url: '#delete-a-pia-outbound-requires-replacementtag-or-deleterules-when-routing-still-references-the-tag'
+    - depth: 2
+      title: Generate a WireGuard key, register it with PIA /addKey, and store the
+        encrypted binding.
+      url: '#generate-a-wireguard-key-register-it-with-pia-addkey-and-store-the-encrypted-binding'
+    - depth: 2
+      title: Register a new key first, then switch the active binding.
+      url: '#register-a-new-key-first-then-switch-the-active-binding'
+    - depth: 2
+      title: Re-register a WireGuard key for the same pinned server.
+      url: '#re-register-a-wireguard-key-for-the-same-pinned-server'
+    - depth: 2
+      title: Probe the PIA outbound on the server. The private key never leaves the
+        panel.
+      url: '#probe-the-pia-outbound-on-the-server-the-private-key-never-leaves-the-panel'
+    - depth: 2
+      title: Enable a ready PIA outbound so it is injected into Xray.
+      url: '#enable-a-ready-pia-outbound-so-it-is-injected-into-xray'
+    - depth: 2
+      title: Disable a PIA outbound. Requires replacementTag or deleteRules when still
+        referenced.
+      url: '#disable-a-pia-outbound-requires-replacementtag-or-deleterules-when-still-referenced'
+    - depth: 2
+      title: List routing, balancer, panel, node, and mtproto references to this
+        outbound tag.
+      url: '#list-routing-balancer-panel-node-and-mtproto-references-to-this-outbound-tag'
+  structuredData:
+    headings:
+      - content: Report whether the secretbox keyring is ready for PIA secrets.
+        id: report-whether-the-secretbox-keyring-is-ready-for-pia-secrets
+      - content: List PIA account profiles (no token material).
+        id: list-pia-account-profiles-no-token-material
+      - content: Create a PIA account profile.
+        id: create-a-pia-account-profile
+      - content: Exchange a PIA username and password for a token. The password is not
+          stored.
+        id: exchange-a-pia-username-and-password-for-a-token-the-password-is-not-stored
+      - content: Rename or enable/disable a PIA profile.
+        id: rename-or-enabledisable-a-pia-profile
+      - content: Delete a PIA profile and its egresses. Fails with
+          pia_dependency_conflict when outbound tags are still referenced.
+        id: delete-a-pia-profile-and-its-egresses-fails-with-pia_dependency_conflict-when-outbound-tags-are-still-referenced
+      - content: Show freshness of the last signature-verified PIA server list.
+        id: show-freshness-of-the-last-signature-verified-pia-server-list
+      - content: Fetch and signature-verify the PIA server list.
+        id: fetch-and-signature-verify-the-pia-server-list
+      - content: List PIA regions from the verified catalog.
+        id: list-pia-regions-from-the-verified-catalog
+      - content: List WireGuard servers in a PIA region.
+        id: list-wireguard-servers-in-a-pia-region
+      - content: List managed PIA outbounds (no private keys).
+        id: list-managed-pia-outbounds-no-private-keys
+      - content: Create a PIA outbound with an immutable tag.
+        id: create-a-pia-outbound-with-an-immutable-tag
+      - content: Get one managed PIA outbound.
+        id: get-one-managed-pia-outbound
+      - content: Update display name or tunnel options. The outbound tag is immutable.
+        id: update-display-name-or-tunnel-options-the-outbound-tag-is-immutable
+      - content: Delete a PIA outbound. Requires replacementTag or deleteRules when
+          routing still references the tag.
+        id: delete-a-pia-outbound-requires-replacementtag-or-deleterules-when-routing-still-references-the-tag
+      - content: Generate a WireGuard key, register it with PIA /addKey, and store the
+          encrypted binding.
+        id: generate-a-wireguard-key-register-it-with-pia-addkey-and-store-the-encrypted-binding
+      - content: Register a new key first, then switch the active binding.
+        id: register-a-new-key-first-then-switch-the-active-binding
+      - content: Re-register a WireGuard key for the same pinned server.
+        id: re-register-a-wireguard-key-for-the-same-pinned-server
+      - content: Probe the PIA outbound on the server. The private key never leaves the
+          panel.
+        id: probe-the-pia-outbound-on-the-server-the-private-key-never-leaves-the-panel
+      - content: Enable a ready PIA outbound so it is injected into Xray.
+        id: enable-a-ready-pia-outbound-so-it-is-injected-into-xray
+      - content: Disable a PIA outbound. Requires replacementTag or deleteRules when
+          still referenced.
+        id: disable-a-pia-outbound-requires-replacementtag-or-deleterules-when-still-referenced
+      - content: List routing, balancer, panel, node, and mtproto references to this
+          outbound tag.
+        id: list-routing-balancer-panel-node-and-mtproto-references-to-this-outbound-tag
+    contents: []
+---
+
+{/* This file was generated by Fumadocs. Do not edit this file directly. Any changes should be made by running the generation command again. */}
+
+export default function Layout(props) {
+  const { APIPage, OpenAPIPage } = props.components ?? {};
+  // "APIPage" is the old name from v10, this allows both for backward compatibility
+  const Comp = OpenAPIPage ?? APIPage;
+  return (
+    <>
+      {props.children}
+      <Comp document="./public/openapi.json" webhooks={[]} operations={[{"path":"/panel/api/pia/status","method":"get"},{"path":"/panel/api/pia/profiles","method":"get"},{"path":"/panel/api/pia/profiles","method":"post"},{"path":"/panel/api/pia/profiles/{uid}/authenticate","method":"post"},{"path":"/panel/api/pia/profiles/{uid}","method":"patch"},{"path":"/panel/api/pia/profiles/{uid}","method":"delete"},{"path":"/panel/api/pia/catalog/status","method":"get"},{"path":"/panel/api/pia/catalog/refresh","method":"post"},{"path":"/panel/api/pia/catalog/regions","method":"get"},{"path":"/panel/api/pia/catalog/regions/{id}/servers","method":"get"},{"path":"/panel/api/pia/egresses","method":"get"},{"path":"/panel/api/pia/egresses","method":"post"},{"path":"/panel/api/pia/egresses/{uid}","method":"get"},{"path":"/panel/api/pia/egresses/{uid}","method":"patch"},{"path":"/panel/api/pia/egresses/{uid}","method":"delete"},{"path":"/panel/api/pia/egresses/{uid}/provision","method":"post"},{"path":"/panel/api/pia/egresses/{uid}/rotate-key","method":"post"},{"path":"/panel/api/pia/egresses/{uid}/reprovision","method":"post"},{"path":"/panel/api/pia/egresses/{uid}/test","method":"post"},{"path":"/panel/api/pia/egresses/{uid}/enable","method":"post"},{"path":"/panel/api/pia/egresses/{uid}/disable","method":"post"},{"path":"/panel/api/pia/egresses/{uid}/dependencies","method":"get"}]} showTitle />
+    </>
+  );
+}

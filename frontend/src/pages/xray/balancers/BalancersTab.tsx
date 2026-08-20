@@ -42,6 +42,7 @@ interface BalancersTabProps {
   setTemplateSettings: SetTemplate;
   clientReverseTags: string[];
   subscriptionOutboundTags?: string[];
+  piaOutboundTags?: string[];
   isMobile: boolean;
 }
 
@@ -69,6 +70,7 @@ export default function BalancersTab({
   setTemplateSettings,
   clientReverseTags,
   subscriptionOutboundTags,
+  piaOutboundTags,
   isMobile,
 }: BalancersTabProps) {
   const { t } = useTranslation();
@@ -107,8 +109,11 @@ export default function BalancersTab({
     for (const tag of subscriptionOutboundTags || []) {
       if (tag) tags.add(tag);
     }
+    for (const tag of piaOutboundTags || []) {
+      if (tag) tags.add(tag);
+    }
     return [...tags];
-  }, [templateSettings?.outbounds, clientReverseTags, subscriptionOutboundTags]);
+  }, [templateSettings?.outbounds, clientReverseTags, subscriptionOutboundTags, piaOutboundTags]);
 
   const otherTags = useMemo(() => {
     if (editingIndex == null) return rows.map((b) => b.tag).filter(Boolean);
