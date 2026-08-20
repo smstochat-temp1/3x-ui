@@ -474,37 +474,40 @@ func (s *InboundService) GetAllEmails() ([]string, error) {
 	return emails, nil
 }
 
-// getAllEmailSubIDs returns email→subId. An email seen with two different
-// non-empty subIds is locked (mapped to "") so neither identity can claim it.
-func (s *InboundService) getAllEmailSubIDs() (map[string]string, error) {
+// emailSubIDsForClients returns lower(email)→subId for just the emails being
+// checked. One clients row owns an email's identity, so the answer no longer
+// needs a scan of every inbound's settings JSON (#6252).
+func (s *InboundService) emailSubIDsForClients(clients []model.Client) (map[string]string, error) {
+	want := make(map[string]struct{}, len(clients))
+	for i := range clients {
+		if email := strings.ToLower(strings.TrimSpace(clients[i].Email)); email != "" {
+			want[email] = struct{}{}
+		}
+	}
+	result := make(map[string]string, len(want))
+	if len(want) == 0 {
+		return result, nil
+	}
+	lowered := make([]string, 0, len(want))
+	for email := range want {
+		lowered = append(lowered, email)
+	}
 	db := database.GetDB()
-	var rows []struct {
-		Email string
-		SubID string
-	}
-	query := fmt.Sprintf(
-		"SELECT %s AS email, %s AS sub_id %s",
-		database.JSONFieldText("client.value", "email"),
-		database.JSONFieldText("client.value", "subId"),
-		database.JSONClientsFromInbound(),
-	)
-	if err := db.Raw(query).Scan(&rows).Error; err != nil {
-		return nil, err
-	}
-	result := make(map[string]string, len(rows))
-	for _, r := range rows {
-		email := strings.ToLower(r.Email)
-		if email == "" {
-			continue
+	for _, batch := range chunkStrings(lowered, sqlInChunk) {
+		var rows []struct {
+			Email string
+			SubID string `gorm:"column:sub_id"`
 		}
-		subID := r.SubID
-		if existing, ok := result[email]; ok {
-			if existing != subID {
-				result[email] = ""
-			}
-			continue
+		err := db.Model(&model.ClientRecord{}).
+			Select("email, sub_id").
+			Where("LOWER(email) IN ?", batch).
+			Scan(&rows).Error
+		if err != nil {
+			return nil, err
 		}
-		result[email] = subID
+		for _, r := range rows {
+			result[strings.ToLower(r.Email)] = r.SubID
+		}
 	}
 	return result, nil
 }
@@ -930,24 +933,17 @@ func (s *InboundService) AddInbound(inbound *model.Inbound) (*model.Inbound, boo
 		return inbound, false, err
 	}
 
-	conflict, err := s.checkPortConflict(inbound, 0)
+	tag, err := s.resolveInboundTag(inbound, 0)
 	if err != nil {
 		return inbound, false, err
 	}
-	if conflict != nil {
-		return inbound, false, common.NewError(conflict.String())
-	}
-
-	inbound.Tag, err = s.resolveInboundTag(inbound, 0)
-	if err != nil {
-		return inbound, false, err
-	}
+	inbound.Tag = tag
 
 	clients, err := s.GetClients(inbound)
 	if err != nil {
 		return inbound, false, err
 	}
-	existEmail, err := s.clientService.checkEmailsExistForClients(s, clients, nil)
+	existEmail, err := s.clientService.checkEmailsExistForClients(s, clients)
 	if err != nil {
 		return inbound, false, err
 	}
@@ -1027,10 +1023,16 @@ func (s *InboundService) AddInbound(inbound *model.Inbound) (*model.Inbound, boo
 		}
 	}
 
-	db := database.GetDB()
 	needRestart := false
 	var postCommitApply func()
-	err = db.Transaction(func(tx *gorm.DB) error {
+	err = runSerializedTx(func(tx *gorm.DB) error {
+		conflict, cErr := checkPortConflictTx(tx, inbound, 0)
+		if cErr != nil {
+			return cErr
+		}
+		if conflict != nil {
+			return common.NewError(conflict.String())
+		}
 		markDirty := false
 		if err := tx.Omit("ClientStats").Save(inbound).Error; err != nil {
 			return err
@@ -1416,14 +1418,6 @@ func (s *InboundService) UpdateInbound(inbound *model.Inbound) (*model.Inbound, 
 	// stays scoped to its own node (the payload's nodeId is unreliable, often absent).
 	inbound.NodeID = oldInbound.NodeID
 
-	conflict, err := s.checkPortConflict(inbound, inbound.Id)
-	if err != nil {
-		return inbound, false, err
-	}
-	if conflict != nil {
-		return inbound, false, common.NewError(conflict.String())
-	}
-
 	// Capture the pre-edit protocol and routing state before oldInbound is
 	// overwritten with the new values further down, then ensure a routed
 	// inbound keeps a stable egress port (reusing the one already stored).
@@ -1441,6 +1435,13 @@ func (s *InboundService) UpdateInbound(inbound *model.Inbound) (*model.Inbound, 
 	var postCommitApply func()
 
 	txErr := runSerializedTx(func(tx *gorm.DB) error {
+		conflict, cErr := checkPortConflictTx(tx, inbound, inbound.Id)
+		if cErr != nil {
+			return cErr
+		}
+		if conflict != nil {
+			return common.NewError(conflict.String())
+		}
 		if err := s.updateClientTraffics(tx, oldInbound, inbound); err != nil {
 			return err
 		}
