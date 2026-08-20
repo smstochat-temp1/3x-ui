@@ -48,8 +48,8 @@ func TestServerListRejectsMalformedFields(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := ParseServerList(raw, "6"); err == nil {
-		t.Fatal("expected malformed server list to fail")
+	if _, _, err := ParseServerList(raw, "6"); err == nil || CodeOf(err) != CodeCatalogSchemaUnsupported {
+		t.Fatalf("expected %s for malformed server list, got %s: %v", CodeCatalogSchemaUnsupported, CodeOf(err), err)
 	}
 }
 
@@ -66,8 +66,8 @@ func TestServerListRejectsUnsupportedDuplicateAndTrailingData(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if _, _, err := ParseServerList([]byte(test.raw), test.hint); err == nil {
-				t.Fatal("expected invalid server list to be rejected")
+			if _, _, err := ParseServerList([]byte(test.raw), test.hint); err == nil || CodeOf(err) != CodeCatalogSchemaUnsupported {
+				t.Fatalf("expected %s, got %s: %v", CodeCatalogSchemaUnsupported, CodeOf(err), err)
 			}
 		})
 	}

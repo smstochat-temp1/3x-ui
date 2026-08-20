@@ -30,6 +30,7 @@ func TestVerifySignedServerList(t *testing.T) {
 	}
 	publicPEM := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: publicDER})
 	signed := append(append(append([]byte{}, payload...), '\n', '\n'), []byte(base64.StdEncoding.EncodeToString(signature))...)
+	validSigned := append([]byte(nil), signed...)
 	verified, err := VerifySignedServerList(signed, publicPEM)
 	if err != nil {
 		t.Fatal(err)
@@ -44,7 +45,7 @@ func TestVerifySignedServerList(t *testing.T) {
 	for name, input := range map[string][]byte{
 		"missing signature": payload,
 		"invalid base64":    append(append([]byte{}, payload...), []byte("\nnot-base64!")...),
-		"trailing garbage":  append(append([]byte{}, signed...), []byte("\nextra")...),
+		"trailing garbage":  append(append([]byte{}, validSigned...), []byte("\nextra")...),
 	} {
 		t.Run(name, func(t *testing.T) {
 			if _, err := VerifySignedServerList(input, publicPEM); err == nil {

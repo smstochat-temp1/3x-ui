@@ -4,6 +4,8 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -51,6 +53,63 @@ func TestCatalogCachesOnlyVerifiedParsedSnapshots(t *testing.T) {
 	now = now.Add(catalog.CacheTTL + time.Second)
 	if _, _, err := catalog.ListRegions(context.Background()); err != nil || source.calls != 3 {
 		t.Fatalf("expired snapshot was not refreshed: calls=%d err=%v", source.calls, err)
+	}
+}
+
+type gatedServerListSource struct {
+	snapshot  ServerListSnapshot
+	started   chan struct{}
+	release   chan struct{}
+	startOnce sync.Once
+	calls     atomic.Int32
+}
+
+func (g *gatedServerListSource) Fetch(context.Context) (ServerListSnapshot, error) {
+	g.calls.Add(1)
+	g.startOnce.Do(func() { close(g.started) })
+	<-g.release
+	return g.snapshot, nil
+}
+
+func TestCatalogCoalescesConcurrentRefresh(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join("testdata", "serverlist", "v6_valid.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	source := &gatedServerListSource{
+		snapshot: ServerListSnapshot{Payload: raw, SchemaHint: "6", SignatureVerified: true},
+		started:  make(chan struct{}),
+		release:  make(chan struct{}),
+	}
+	catalog := NewCatalog(source)
+	catalog.CacheTTL = time.Hour
+
+	errc := make(chan error, 2)
+	go func() {
+		_, _, err := catalog.ListRegions(context.Background())
+		errc <- err
+	}()
+	<-source.started
+	go func() {
+		_, _, err := catalog.ListRegions(context.Background())
+		errc <- err
+	}()
+	deadline := time.Now().Add(200 * time.Millisecond)
+	for time.Now().Before(deadline) {
+		if source.calls.Load() > 1 {
+			close(source.release)
+			t.Fatalf("concurrent refresh issued %d fetches, want 1", source.calls.Load())
+		}
+		time.Sleep(time.Millisecond)
+	}
+	close(source.release)
+	for i := 0; i < 2; i++ {
+		if err := <-errc; err != nil {
+			t.Fatal(err)
+		}
+	}
+	if source.calls.Load() != 1 {
+		t.Fatalf("concurrent refresh issued %d fetches, want 1", source.calls.Load())
 	}
 }
 

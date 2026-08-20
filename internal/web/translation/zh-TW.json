@@ -1649,7 +1649,8 @@
         "outboundAdded": "已新增 PIA 出站",
         "outboundUpdated": "已更新 PIA 出站",
         "addedServers": "已新增的伺服器",
-        "alreadyAdded": "此伺服器已在出站清單中。若要換新金鑰請按 {reset}。"
+        "alreadyAdded": "此伺服器已在出站清單中。若要換新金鑰請按 {reset}。",
+        "provisionFailed": "無法產生 PIA 出站，請重試。"
       },
       "tabBalancerSettings": "負載平衡設定",
       "tabObservatory": "觀測器",

@@ -19,7 +19,12 @@ interface PiaModalProps {
   templateSettings: { outbounds?: PiaOutboundRow[] } | null;
   onClose: () => void;
   onAddOutbound: (outbound: Record<string, unknown>) => void;
-  onResetOutbound: (payload: { index: number; outbound: Record<string, unknown>; oldTag?: string; newTag: string }) => void;
+  onResetOutbound: (payload: {
+    index: number;
+    outbound: Record<string, unknown>;
+    oldTag?: string;
+    newTag: string;
+  }) => void;
 }
 
 interface PiaAccount {
@@ -88,12 +93,14 @@ function buildPiaOutbound(key: PiaKey): Record<string, unknown> {
       address: [key.address],
       mtu: 1420,
       noKernelTun: true,
-      peers: [{
-        publicKey: key.publicKey,
-        endpoint: key.endpoint,
-        allowedIPs: ['0.0.0.0/0'],
-        keepAlive: 25,
-      }],
+      peers: [
+        {
+          publicKey: key.publicKey,
+          endpoint: key.endpoint,
+          allowedIPs: ['0.0.0.0/0'],
+          keepAlive: 25,
+        },
+      ],
     },
   };
 }
@@ -126,7 +133,10 @@ export default function PiaModal({
     });
   }, [templateSettings?.outbounds]);
 
-  const addedHostnames = useMemo(() => new Set(piaRows.map((row) => row.hostname).filter(Boolean)), [piaRows]);
+  const addedHostnames = useMemo(
+    () => new Set(piaRows.map((row) => row.hostname).filter(Boolean)),
+    [piaRows],
+  );
   const selectedAlreadyAdded = Boolean(hostname && addedHostnames.has(hostname));
 
   const filteredServers = useMemo(() => {
@@ -158,7 +168,15 @@ export default function PiaModal({
   }, [fetchCountries]);
 
   useEffect(() => {
-    if (open) fetchData();
+    if (!open) return;
+    let cancelled = false;
+    void (async () => {
+      await fetchData();
+      if (cancelled) return;
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [open, fetchData]);
 
   async function login() {
@@ -216,10 +234,16 @@ export default function PiaModal({
     }
   }
 
-  async function provisionOutbound(selectedHostname: string): Promise<Record<string, unknown> | null> {
+  async function provisionOutbound(
+    selectedHostname: string,
+  ): Promise<Record<string, unknown> | null> {
     if (!selectedHostname) return null;
-    const msg = await HttpUtil.post<PiaKey>('/panel/api/xray/pia/addKey', { hostname: selectedHostname });
-    if (!msg?.success || !msg.obj?.secretKey || !msg.obj.publicKey || !msg.obj.endpoint || !msg.obj.address) {
+    const msg = await HttpUtil.post<PiaKey>('/panel/api/xray/pia/addKey', {
+      hostname: selectedHostname,
+    });
+    if (!msg?.success) return null;
+    if (!msg.obj?.secretKey || !msg.obj.publicKey || !msg.obj.endpoint || !msg.obj.address) {
+      messageApi.error(t('pages.xray.pia.provisionFailed'));
       return null;
     }
     return buildPiaOutbound(msg.obj);
@@ -262,128 +286,154 @@ export default function PiaModal({
     <>
       {messageContextHolder}
       <Modal open={open} title="Private Internet Access WireGuard" footer={null} onCancel={onClose}>
-      <FormProvider {...methods}>
-      {piaData == null ? (
-        <Form
-          colon={false}
-          labelCol={{ md: { span: 6 } }}
-          wrapperCol={{ md: { span: 18 } }}
-          className="mt-20"
-        >
-          <FormField name="username" label={t('pages.xray.pia.username')}>
-            <Input placeholder={t('pages.xray.pia.username')} autoComplete="username" />
-          </FormField>
-          <FormField name="password" label={t('pages.xray.pia.password')}>
-            <Input.Password placeholder={t('pages.xray.pia.password')} autoComplete="current-password" />
-          </FormField>
-          <Button type="primary" className="mt-10" loading={loading} icon={<LoginOutlined />} onClick={() => void login()}>
-            {t('login')}
-          </Button>
-        </Form>
-      ) : (
-        <>
-          <table className="pia-data-table">
-            <tbody>
-              <tr className="row-odd">
-                <td>{t('pages.xray.pia.account')}</td>
-                <td>{piaData.accountHint || piaData.username}</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <Button loading={loading} type="primary" danger className="mt-8" onClick={() => void logout()}>
-            {t('logout')}
-          </Button>
-
-          <Divider className="zero-margin">{t('pages.xray.warp.settings')}</Divider>
-
-          <Form colon={false} labelCol={{ md: { span: 6 } }} wrapperCol={{ md: { span: 18 } }} className="mt-10">
-            <FormField
-              name="countryCode"
-              label={t('pages.xray.outbound.country')}
-              transform={{ input: (v) => v ?? undefined }}
-              onAfterChange={(v) => void fetchServers(v as string)}
+        <FormProvider {...methods}>
+          {piaData == null ? (
+            <Form
+              colon={false}
+              labelCol={{ md: { span: 6 } }}
+              wrapperCol={{ md: { span: 18 } }}
+              className="mt-20"
             >
-              <Select
-                data-testid="pia-country-select"
-                showSearch={{ optionFilterProp: 'label' }}
-                options={countries.map((c) => {
-                  const name = countryName(c.code, locale) || c.code;
-                  const flag = countryFlag(c.code);
-                  return { value: c.code, label: `${flag ? `${flag} ` : ''}${name} (${c.code})` };
-                })}
-              />
-            </FormField>
-
-            {regions.length > 0 && (
-              <FormField name="regionId" label={t('pages.xray.pia.region')}>
-                <Select
-                  data-testid="pia-region-select"
-                  showSearch={{ optionFilterProp: 'label' }}
-                  options={[
-                    { value: null, label: t('pages.xray.pia.allRegions') },
-                    ...regions.map((r) => ({ value: r.id, label: r.name })),
-                  ]}
+              <FormField name="username" label={t('pages.xray.pia.username')}>
+                <Input placeholder={t('pages.xray.pia.username')} autoComplete="username" />
+              </FormField>
+              <FormField name="password" label={t('pages.xray.pia.password')}>
+                <Input.Password
+                  placeholder={t('pages.xray.pia.password')}
+                  autoComplete="current-password"
                 />
               </FormField>
-            )}
-
-            {filteredServers.length > 0 && (
-              <FormField name="hostname" label={t('pages.xray.outbound.server')}>
-                <Select
-                  data-testid="pia-server-select"
-                  showSearch={{ optionFilterProp: 'label' }}
-                  options={filteredServers.map((s) => ({
-                    value: s.hostname,
-                    label: `${s.regionName} ${s.hostname} ${s.ip}`,
-                  }))}
-                />
-              </FormField>
-            )}
-          </Form>
-
-          <Button
-            type="primary"
-            className="mt-10"
-            disabled={!hostname || selectedAlreadyAdded}
-            loading={loading}
-            onClick={() => void addOutbound()}
-          >
-            {t('pages.xray.warp.addOutbound')}
-          </Button>
-          {selectedAlreadyAdded && (
-            <div className="pia-already-added">{t('pages.xray.pia.alreadyAdded', { reset: t('reset') })}</div>
-          )}
-
-          {piaRows.length > 0 && (
+              <Button
+                type="primary"
+                className="mt-10"
+                loading={loading}
+                icon={<LoginOutlined />}
+                onClick={() => void login()}
+              >
+                {t('login')}
+              </Button>
+            </Form>
+          ) : (
             <>
-              <Divider className="my-10">{t('pages.xray.pia.addedServers')}</Divider>
-              <table className="pia-added-table" data-testid="pia-added-table">
+              <table className="pia-data-table">
                 <tbody>
-                  {piaRows.map((row) => (
-                    <tr key={`${row.index}-${row.tag}`}>
-                      <td>{row.tag}</td>
-                      <td>
-                        <Button
-                          type="primary"
-                          danger
-                          size="small"
-                          loading={loading}
-                          data-testid={`pia-reset-${row.index}`}
-                          onClick={() => void resetOutbound(row.index, row.hostname)}
-                        >
-                          {t('reset')}
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
+                  <tr className="row-odd">
+                    <td>{t('pages.xray.pia.account')}</td>
+                    <td>{piaData.accountHint || piaData.username}</td>
+                  </tr>
                 </tbody>
               </table>
+
+              <Button
+                loading={loading}
+                type="primary"
+                danger
+                className="mt-8"
+                onClick={() => void logout()}
+              >
+                {t('logout')}
+              </Button>
+
+              <Divider className="zero-margin">{t('pages.xray.warp.settings')}</Divider>
+
+              <Form
+                colon={false}
+                labelCol={{ md: { span: 6 } }}
+                wrapperCol={{ md: { span: 18 } }}
+                className="mt-10"
+              >
+                <FormField
+                  name="countryCode"
+                  label={t('pages.xray.outbound.country')}
+                  transform={{ input: (v) => v ?? undefined }}
+                  onAfterChange={(v) => void fetchServers(v as string)}
+                >
+                  <Select
+                    data-testid="pia-country-select"
+                    showSearch={{ optionFilterProp: 'label' }}
+                    options={countries.map((c) => {
+                      const name = countryName(c.code, locale) || c.code;
+                      const flag = countryFlag(c.code);
+                      return {
+                        value: c.code,
+                        label: `${flag ? `${flag} ` : ''}${name} (${c.code})`,
+                      };
+                    })}
+                  />
+                </FormField>
+
+                {regions.length > 0 && (
+                  <FormField name="regionId" label={t('pages.xray.pia.region')}>
+                    <Select
+                      data-testid="pia-region-select"
+                      showSearch={{ optionFilterProp: 'label' }}
+                      options={[
+                        { value: null, label: t('pages.xray.pia.allRegions') },
+                        ...regions.map((r) => ({ value: r.id, label: r.name })),
+                      ]}
+                    />
+                  </FormField>
+                )}
+
+                {filteredServers.length > 0 && (
+                  <FormField name="hostname" label={t('pages.xray.outbound.server')}>
+                    <Select
+                      data-testid="pia-server-select"
+                      showSearch={{ optionFilterProp: 'label' }}
+                      options={filteredServers.map((s) => ({
+                        value: s.hostname,
+                        label: `${s.regionName} ${s.hostname} ${s.ip}`,
+                      }))}
+                    />
+                  </FormField>
+                )}
+              </Form>
+
+              <Button
+                type="primary"
+                className="mt-10"
+                disabled={!hostname || selectedAlreadyAdded}
+                loading={loading}
+                onClick={() => void addOutbound()}
+              >
+                {t('pages.xray.warp.addOutbound')}
+              </Button>
+              {selectedAlreadyAdded && (
+                <div className="pia-already-added">
+                  {t('pages.xray.pia.alreadyAdded', { reset: t('reset') })}
+                </div>
+              )}
+
+              {piaRows.length > 0 && (
+                <>
+                  <Divider className="my-10">{t('pages.xray.pia.addedServers')}</Divider>
+                  <table className="pia-added-table" data-testid="pia-added-table">
+                    <tbody>
+                      {piaRows.map((row) => (
+                        <tr key={`${row.index}-${row.tag}`}>
+                          <td>{row.tag}</td>
+                          <td>
+                            <Button
+                              type="primary"
+                              danger
+                              size="small"
+                              loading={loading}
+                              disabled={!row.hostname}
+                              data-testid={`pia-reset-${row.index}`}
+                              onClick={() => void resetOutbound(row.index, row.hostname)}
+                            >
+                              {t('reset')}
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )}
             </>
           )}
-        </>
-      )}
-      </FormProvider>
+        </FormProvider>
       </Modal>
     </>
   );

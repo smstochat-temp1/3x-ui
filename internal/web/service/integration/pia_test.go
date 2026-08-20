@@ -148,9 +148,22 @@ func TestPiaOutboundTag(t *testing.T) {
 		{"", "berlin1", "pia-berlin1"},
 	}
 	for _, tt := range tests {
-		if got := piaOutboundTag(tt.region, tt.host); got != tt.want {
-			t.Fatalf("piaOutboundTag(%q, %q) = %q, want %q", tt.region, tt.host, got, tt.want)
-		}
+		t.Run(tt.want, func(t *testing.T) {
+			if got := piaOutboundTag(tt.region, tt.host); got != tt.want {
+				t.Fatalf("piaOutboundTag(%q, %q) = %q, want %q", tt.region, tt.host, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPiaCorruptSettingIsNotTreatedAsLoggedOut(t *testing.T) {
+	svc := setupPiaService(t)
+	if err := svc.SetPia(`{"username":`); err != nil {
+		t.Fatal(err)
+	}
+	data, err := svc.GetPiaData()
+	if err == nil || data != nil {
+		t.Fatalf("corrupt pia setting must not look logged-out: data=%+v err=%v", data, err)
 	}
 }
 
@@ -247,6 +260,8 @@ func TestPiaWrongAADCiphertextRejected(t *testing.T) {
 	}
 	if _, err := svc.AddKey("useast1"); err == nil {
 		t.Fatal("node-bound ciphertext must not decrypt as a PIA token")
+	} else if !strings.Contains(err.Error(), "authentication failed") {
+		t.Fatalf("wrong-AAD error: %v", err)
 	}
 }
 

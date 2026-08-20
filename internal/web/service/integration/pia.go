@@ -253,7 +253,7 @@ func (s *PiaService) loadStored() (*piaStored, error) {
 	}
 	var stored piaStored
 	if err := json.Unmarshal([]byte(raw), &stored); err != nil {
-		return nil, nil
+		return nil, err
 	}
 	atRest := stored.Token
 	if atRest == "" {
