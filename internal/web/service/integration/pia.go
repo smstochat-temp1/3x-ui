@@ -9,10 +9,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mhsanaei/3x-ui/v3/internal/crypto/nodetoken"
 	piaprotocol "github.com/mhsanaei/3x-ui/v3/internal/pia"
 	"github.com/mhsanaei/3x-ui/v3/internal/util/wireguard"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service"
 )
+
+var piaTokenAAD = []byte("settings/pia_token")
 
 type PiaService struct {
 	service.SettingService
@@ -80,11 +83,7 @@ func (s *PiaService) Login(username, password string) (*PiaAccountView, error) {
 		Token:          string(tok.Value),
 		TokenExpiresAt: tok.ExpiresAt.Unix(),
 	}
-	raw, err := json.Marshal(stored)
-	if err != nil {
-		return nil, err
-	}
-	if err := s.SetPia(string(raw)); err != nil {
+	if err := s.saveStored(stored); err != nil {
 		return nil, err
 	}
 	return accountView(stored.Username), nil
@@ -92,7 +91,10 @@ func (s *PiaService) Login(username, password string) (*PiaAccountView, error) {
 
 func (s *PiaService) GetPiaData() (*PiaAccountView, error) {
 	stored, err := s.loadStored()
-	if err != nil || stored == nil || stored.Token == "" {
+	if err != nil {
+		return nil, err
+	}
+	if stored == nil || stored.Token == "" {
 		return nil, nil
 	}
 	return accountView(stored.Username), nil
@@ -231,6 +233,19 @@ func piaTagPart(s string, stripDomain bool) string {
 	return strings.ReplaceAll(s, "_", "-")
 }
 
+func (s *PiaService) saveStored(stored piaStored) error {
+	enc, err := nodetoken.EncryptBound(piaTokenAAD, stored.Token)
+	if err != nil {
+		return err
+	}
+	stored.Token = enc
+	raw, err := json.Marshal(stored)
+	if err != nil {
+		return err
+	}
+	return s.SetPia(string(raw))
+}
+
 func (s *PiaService) loadStored() (*piaStored, error) {
 	raw, err := s.GetPia()
 	if err != nil || strings.TrimSpace(raw) == "" {
@@ -239,6 +254,23 @@ func (s *PiaService) loadStored() (*piaStored, error) {
 	var stored piaStored
 	if err := json.Unmarshal([]byte(raw), &stored); err != nil {
 		return nil, nil
+	}
+	atRest := stored.Token
+	if atRest == "" {
+		return &stored, nil
+	}
+	if nodetoken.IsEncrypted(atRest) && !nodetoken.Enabled() {
+		return nil, piaprotocol.NewError(piaprotocol.CodeTokenRejected, "The PIA token is encrypted but NODE_TOKEN_ENCRYPTION is off. Sign in again.")
+	}
+	plain, err := nodetoken.DecryptBound(piaTokenAAD, atRest)
+	if err != nil {
+		return nil, err
+	}
+	stored.Token = plain
+	if nodetoken.Enabled() && !nodetoken.IsEncrypted(atRest) {
+		if err := s.saveStored(stored); err != nil {
+			return nil, err
+		}
 	}
 	return &stored, nil
 }

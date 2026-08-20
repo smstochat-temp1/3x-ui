@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mhsanaei/3x-ui/v3/internal/crypto/nodetoken"
 	"github.com/mhsanaei/3x-ui/v3/internal/database"
 	piaprotocol "github.com/mhsanaei/3x-ui/v3/internal/pia"
 )
@@ -27,10 +28,14 @@ func (f fakePiaCatalog) Fetch(context.Context) (piaprotocol.ServerListSnapshot, 
 	return piaprotocol.ServerListSnapshot{Payload: f.payload, SchemaHint: "6", SignatureVerified: true}, nil
 }
 
-type fakePiaRegistrar struct{ n int }
+type fakePiaRegistrar struct {
+	n     int
+	token string
+}
 
-func (f *fakePiaRegistrar) RegisterKey(_ context.Context, server piaprotocol.WireGuardServer, _ string, _ string) (piaprotocol.Registration, error) {
+func (f *fakePiaRegistrar) RegisterKey(_ context.Context, server piaprotocol.WireGuardServer, token string, _ string) (piaprotocol.Registration, error) {
 	f.n++
+	f.token = token
 	key := make([]byte, 32)
 	key[0] = byte(f.n)
 	return piaprotocol.Registration{
@@ -146,5 +151,124 @@ func TestPiaOutboundTag(t *testing.T) {
 		if got := piaOutboundTag(tt.region, tt.host); got != tt.want {
 			t.Fatalf("piaOutboundTag(%q, %q) = %q, want %q", tt.region, tt.host, got, tt.want)
 		}
+	}
+}
+
+func enablePiaTokenEncryption(t *testing.T) {
+	t.Helper()
+	var k [32]byte
+	for i := range k {
+		k[i] = byte(i + 1)
+	}
+	ring := &nodetoken.Keyring{ActiveID: "t1", Keys: map[string][32]byte{"t1": k}}
+	codec, err := nodetoken.NewCodec(nodetoken.ModeRequired, ring)
+	if err != nil {
+		t.Fatalf("new codec: %v", err)
+	}
+	nodetoken.Init(codec)
+	t.Cleanup(func() {
+		off, _ := nodetoken.NewCodec(nodetoken.ModeOff, nil)
+		nodetoken.Init(off)
+	})
+}
+
+func TestPiaLoginEncryptsTokenWhenRequired(t *testing.T) {
+	svc := setupPiaService(t)
+	enablePiaTokenEncryption(t)
+	if _, err := svc.Login("p1234567", "password-long-enough"); err != nil {
+		t.Fatal(err)
+	}
+	stored, err := svc.GetPia()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(stored, "tokentokentokentoken12") {
+		t.Fatalf("plaintext token at rest: %s", stored)
+	}
+	var parsed piaStored
+	if err := json.Unmarshal([]byte(stored), &parsed); err != nil {
+		t.Fatal(err)
+	}
+	if !nodetoken.IsEncrypted(parsed.Token) {
+		t.Fatalf("token at rest is not encrypted: %q", parsed.Token)
+	}
+	data, err := svc.GetPiaData()
+	if err != nil || data == nil || data.AccountHint != "p1****67" {
+		t.Fatalf("data: %+v err=%v", data, err)
+	}
+	raw, _ := json.Marshal(data)
+	if strings.Contains(string(raw), "tokentokentokentoken12") {
+		t.Fatalf("secret leaked in data: %s", raw)
+	}
+}
+
+func TestPiaAddKeyDecryptsEncryptedToken(t *testing.T) {
+	svc := setupPiaService(t)
+	enablePiaTokenEncryption(t)
+	if _, err := svc.Login("p1234567", "password-long-enough"); err != nil {
+		t.Fatal(err)
+	}
+	key, err := svc.AddKey("useast1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if key.Tag != "pia-us-east-useast1" {
+		t.Fatalf("key: %+v", key)
+	}
+	reg := svc.Registrar.(*fakePiaRegistrar)
+	if reg.token != "tokentokentokentoken12" {
+		t.Fatalf("addKey must decrypt the stored token, got %q", reg.token)
+	}
+}
+
+func TestPiaEncryptedTokenRejectedWhenEncryptionOff(t *testing.T) {
+	svc := setupPiaService(t)
+	enablePiaTokenEncryption(t)
+	if _, err := svc.Login("p1234567", "password-long-enough"); err != nil {
+		t.Fatal(err)
+	}
+	off, _ := nodetoken.NewCodec(nodetoken.ModeOff, nil)
+	nodetoken.Init(off)
+	if _, err := svc.AddKey("useast1"); err == nil || piaprotocol.CodeOf(err) != piaprotocol.CodeTokenRejected {
+		t.Fatalf("addKey with encrypted token and encryption off: %v", err)
+	}
+}
+
+func TestPiaWrongAADCiphertextRejected(t *testing.T) {
+	svc := setupPiaService(t)
+	enablePiaTokenEncryption(t)
+	enc, err := nodetoken.Encrypt(1, "tokentokentokentoken12")
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, _ := json.Marshal(piaStored{Username: "p1234567", Token: enc, TokenExpiresAt: time.Now().Add(time.Hour).Unix()})
+	if err := svc.SetPia(string(raw)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.AddKey("useast1"); err == nil {
+		t.Fatal("node-bound ciphertext must not decrypt as a PIA token")
+	}
+}
+
+func TestPiaPlaintextMigratesWhenEncryptionEnabled(t *testing.T) {
+	svc := setupPiaService(t)
+	if _, err := svc.Login("p1234567", "password-long-enough"); err != nil {
+		t.Fatal(err)
+	}
+	before, err := svc.GetPia()
+	if err != nil || !strings.Contains(before, "tokentokentokentoken12") {
+		t.Fatalf("want plaintext before migrate: %q err=%v", before, err)
+	}
+	enablePiaTokenEncryption(t)
+	if _, err := svc.GetPiaData(); err != nil {
+		t.Fatal(err)
+	}
+	after, err := svc.GetPia()
+	if err != nil || strings.Contains(after, "tokentokentokentoken12") {
+		t.Fatalf("want ciphertext after migrate: %q err=%v", after, err)
+	}
+	var parsed piaStored
+	if err := json.Unmarshal([]byte(after), &parsed); err != nil || !nodetoken.IsEncrypted(parsed.Token) {
+		t.Fatalf("migrated token: %+v err=%v", parsed, err)
 	}
 }
